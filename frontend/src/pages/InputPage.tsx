@@ -93,7 +93,9 @@ const InputPage = () => {
         >
           Next Step
         </Button>
-        <Button onClick={() => generateCoverLetter}>Generate Stuff</Button>
+        <Button onClick={() => generateCoverLetter(resume, jobData)}>
+          Generate Stuff
+        </Button>
       </div>
 
       <div className="mt-12 mb-10 text-center text-sm text-muted-foreground max-w-2xl mx-auto">
