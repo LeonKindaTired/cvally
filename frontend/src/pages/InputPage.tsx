@@ -23,6 +23,7 @@ const InputPage = () => {
     company: "",
     jobDescription: "",
   });
+  const [data, setData] = useState("");
 
   const handleResumeChange = (newData: Resume) => {
     setResume(newData);
@@ -30,6 +31,20 @@ const InputPage = () => {
 
   const handleJobDataChange = (newData: JobDescriptionData) => {
     setJobData(newData);
+  };
+
+  const generateCoverLetter = async (
+    resumeText: Resume,
+    jobDescription: JobDescriptionData
+  ) => {
+    const res = await fetch("/api/generateCoverLetter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resumeText, jobDescription }),
+    });
+
+    const data = await res.json();
+    setData(data.choices?.[0]?.message?.content);
   };
 
   const nextStep = () => {
@@ -61,12 +76,7 @@ const InputPage = () => {
       {step === 3 && (
         <div className="flex flex-col max-w-52 items-center text-center">
           <h2>Resume Content</h2>
-          <pre>{resume.textContent}</pre>
-
-          <h2>Job Details</h2>
-          <p>Title: {jobData.jobTitle}</p>
-          <p>Company: {jobData.company}</p>
-          <p>Description: {jobData.jobDescription}</p>
+          {<>{data}</>}
         </div>
       )}
       <div className="flex gap-4 items-center">
@@ -83,6 +93,7 @@ const InputPage = () => {
         >
           Next Step
         </Button>
+        <Button onClick={() => generateCoverLetter}>Generate Stuff</Button>
       </div>
 
       <div className="mt-12 mb-10 text-center text-sm text-muted-foreground max-w-2xl mx-auto">
