@@ -2,6 +2,8 @@ import { useState } from "react";
 import UploadPage from "./InputPage/UploadPage";
 import { Button } from "@/components/ui/button";
 import JobInput from "./InputPage/JobInput";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export type Resume = {
   textContent: string;
@@ -24,6 +26,7 @@ const InputPage = () => {
     jobDescription: "",
   });
   const [data, setData] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleResumeChange = (newData: Resume) => {
     setResume(newData);
@@ -33,18 +36,37 @@ const InputPage = () => {
     setJobData(newData);
   };
 
-  const generateCoverLetter = async (
-    resumeText: Resume,
-    jobDescription: JobDescriptionData
-  ) => {
-    const res = await fetch("/api/generateCoverLetter", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resumeText, jobDescription }),
-    });
+  const generateCoverLetter = async () => {
+    if (!resume.textContent || !jobData.jobDescription) return;
 
-    const data = await res.json();
-    setData(data.choices?.[0]?.message?.content);
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/generate/generate-cv",
+        {
+          resumeText: resume.textContent,
+          jobDescription: jobData,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        throw new Error(response.data.error || "API request failed");
+      }
+
+      setData(response.data.cv);
+      setStep(3);
+    } catch (error: any) {
+      console.error("Error:", error);
+      setData(`Error: ${error.response?.data?.error || error.message}`);
+      setStep(3);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const nextStep = () => {
@@ -74,28 +96,55 @@ const InputPage = () => {
         </div>
       )}
       {step === 3 && (
-        <div className="flex flex-col max-w-52 items-center text-center">
-          <h2>Resume Content</h2>
-          {<>{data}</>}
+        <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold mb-4">Generated Cover Letter</h2>
+          <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md">
+            {data}
+          </div>
+          <div className="flex gap-4 items-center mt-4">
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(data);
+                toast("Copied to clipboard.");
+              }}
+            >
+              Copy to Clipboard
+            </Button>
+            <Button
+              onClick={generateCoverLetter}
+              disabled={loading || jobData.jobDescription.length < 100}
+            >
+              {loading ? "Generating..." : "Regenerate"}
+            </Button>
+          </div>
         </div>
       )}
-      <div className="flex gap-4 items-center">
-        <Button onClick={previousStep}>Previous Step</Button>
-        <Button
-          onClick={nextStep}
-          disabled={
-            step === 1
-              ? resume.textContent.length < 100
-              : jobData.jobDescription.length < 100 &&
-                jobData.company === "" &&
-                jobData.jobTitle === ""
-          }
-        >
-          Next Step
+      <div className="flex gap-4 items-center mt-4">
+        <Button onClick={previousStep} disabled={step === 1}>
+          Previous Step
         </Button>
-        <Button onClick={() => generateCoverLetter(resume, jobData)}>
-          Generate Stuff
-        </Button>
+
+        {step < 3 ? (
+          <Button
+            onClick={nextStep}
+            disabled={
+              step === 1
+                ? resume.textContent.length < 100
+                : jobData.jobDescription.length < 100
+            }
+          >
+            Next Step
+          </Button>
+        ) : null}
+
+        {step === 2 && (
+          <Button
+            onClick={generateCoverLetter}
+            disabled={loading || jobData.jobDescription.length < 100}
+          >
+            {loading ? "Generating..." : "Generate Cover Letter"}
+          </Button>
+        )}
       </div>
 
       <div className="mt-12 mb-10 text-center text-sm text-muted-foreground max-w-2xl mx-auto">

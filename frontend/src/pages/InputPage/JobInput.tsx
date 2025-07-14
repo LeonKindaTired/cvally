@@ -185,7 +185,7 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
         </div>
       </div>
 
-      <div className="mb-8">
+      <div className="">
         <div className="flex items-center justify-between mb-4">
           <Label htmlFor="jobDescription">Job Description </Label>
           <div className="text-sm text-muted-foreground">
