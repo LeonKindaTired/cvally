@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import JobInput from "./InputPage/JobInput";
 import axios from "axios";
 import toast from "react-hot-toast";
+// import PDFStep from "./InputPage/PDFStep";
 
 export type Resume = {
   textContent: string;
@@ -71,11 +72,11 @@ const InputPage = () => {
 
   const nextStep = () => {
     if (step === 1) setStep(2);
-    else setStep(3);
+    else if (step === 2) setStep(3);
+    else setStep(4);
   };
   const previousStep = () => {
-    if (step === 3) setStep(2);
-    else setStep(1);
+    setStep(step - 1);
   };
   return (
     <div className="flex flex-col items-center">
@@ -119,6 +120,9 @@ const InputPage = () => {
           </div>
         </div>
       )}
+
+      {/* {step === 4 && <PDFStep letter={data} />} */}
+
       <div className="flex gap-4 items-center mt-4">
         <Button onClick={previousStep} disabled={step === 1}>
           Previous Step
@@ -136,6 +140,17 @@ const InputPage = () => {
             Next Step
           </Button>
         ) : null}
+
+        {/* <Button
+          onClick={nextStep}
+          disabled={
+            step === 1
+              ? resume.textContent.length < 100
+              : jobData.jobDescription.length < 100
+          }
+        >
+          Next Step
+        </Button> */}
 
         {step === 2 && (
           <Button

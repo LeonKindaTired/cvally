@@ -14,10 +14,6 @@ import mammoth from "mammoth";
 import toast from "react-hot-toast";
 import type { Resume } from "../InputPage";
 
-const pdfjs = await import("pdfjs-dist");
-pdfjs.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
-
 interface UploadPageProps {
   onResumeChange: (data: Resume) => void;
   initialResume: Resume;
@@ -100,16 +96,42 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
   };
 
   const parsePdf = async (data: ArrayBuffer): Promise<string> => {
-    const pdfDoc = await pdfjs.getDocument(new Uint8Array(data)).promise;
-    let textContent = "";
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Load PDF.js from CDN
+        const script = document.createElement("script");
+        script.src =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+        script.onload = async () => {
+          try {
+            // @ts-ignore - pdfjsLib is now global
+            const pdfjsLib = window["pdfjsLib"];
 
-    for (let i = 1; i <= pdfDoc.numPages; i++) {
-      const page = await pdfDoc.getPage(i);
-      const text = await page.getTextContent();
-      textContent += text.items.map((item: any) => item.str).join(" ") + "\n";
-    }
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+              "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-    return textContent;
+            const pdfDoc = await pdfjsLib.getDocument(new Uint8Array(data))
+              .promise;
+            let textContent = "";
+
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+              const page = await pdfDoc.getPage(i);
+              const text = await page.getTextContent();
+              textContent +=
+                text.items.map((item: any) => item.str).join(" ") + "\n";
+            }
+
+            resolve(textContent);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error("PDF processing error:", error);
+        reject(new Error("Failed to process PDF file"));
+      }
+    });
   };
 
   const handleClearFile = () => {
