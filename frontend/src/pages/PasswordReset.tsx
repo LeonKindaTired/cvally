@@ -83,10 +83,12 @@ const PasswordReset = () => {
 
   if (sessionLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center dark:bg-gray-900">
         <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
-          <p className="mt-4 text-lg">Verifying your session...</p>
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500 dark:text-blue-400" />
+          <p className="mt-4 text-lg dark:text-gray-300">
+            Verifying your session...
+          </p>
         </div>
       </div>
     );
@@ -94,15 +96,15 @@ const PasswordReset = () => {
 
   if (sessionError) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center p-4 dark:bg-gray-900">
         <div className="w-full max-w-md text-center">
-          <div className="bg-red-100 text-red-700 p-6 rounded-xl mb-6">
+          <div className="bg-red-100 text-red-700 p-6 rounded-xl mb-6 dark:bg-red-900/20 dark:text-red-300">
             <h1 className="text-2xl font-bold mb-2">Error</h1>
             <p>{sessionError}</p>
           </div>
           <Button
             onClick={() => navigate("/login")}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700"
           >
             Return to Login
           </Button>
@@ -113,16 +115,18 @@ const PasswordReset = () => {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="w-full max-w-md text-center bg-white p-8 rounded-xl shadow-lg">
+      <div className="flex min-h-screen items-center justify-center p-4 dark:bg-gray-900">
+        <div className="w-full max-w-md text-center bg-white p-8 rounded-xl shadow-lg dark:bg-gray-800 dark:shadow-gray-900/50">
           <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Password Updated!</h1>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="text-2xl font-bold mb-2 dark:text-white">
+            Password Updated!
+          </h1>
+          <p className="text-muted-foreground mb-6 dark:text-gray-400">
             Your password has been successfully updated. Redirecting to login...
           </p>
           <Button
             onClick={() => navigate("/login")}
-            className="bg-gradient-to-r from-green-600 to-teal-600"
+            className="bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-700 dark:to-teal-700"
           >
             Go to Login Now
           </Button>
@@ -132,33 +136,36 @@ const PasswordReset = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-md">
         <Button
           variant="ghost"
-          className="mb-6"
+          className="mb-6 dark:text-white dark:hover:bg-gray-800"
           onClick={() => navigate("/login")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Login
         </Button>
 
-        <div className="overflow-hidden border-0 shadow-lg rounded-xl">
-          <div className="bg-gradient-to-r from-green-500 to-teal-600 p-6 text-white">
+        <div className="overflow-hidden border-0 shadow-lg rounded-xl dark:border dark:border-gray-700 dark:bg-gray-800 dark:shadow-gray-900/50">
+          <div className="bg-gradient-to-r from-green-500 to-teal-600 p-6 text-white dark:from-green-700 dark:to-teal-800">
             <h1 className="text-2xl font-bold">Set New Password</h1>
-            <p className="text-green-100 mt-2">
+            <p className="text-green-100 mt-2 dark:text-green-200">
               Create a strong, secure password
             </p>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 dark:bg-gray-800">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label htmlFor="new-password" className="text-sm font-medium">
+                <label
+                  htmlFor="new-password"
+                  className="text-sm font-medium dark:text-gray-300"
+                >
                   New Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="new-password"
                     type={showPassword ? "text" : "password"}
@@ -166,11 +173,11 @@ const PasswordReset = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -180,7 +187,7 @@ const PasswordReset = () => {
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Must be at least 8 characters
                 </p>
               </div>
@@ -188,12 +195,12 @@ const PasswordReset = () => {
               <div className="space-y-2">
                 <label
                   htmlFor="confirm-password"
-                  className="text-sm font-medium"
+                  className="text-sm font-medium dark:text-gray-300"
                 >
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="confirm-password"
                     type={showConfirmPassword ? "text" : "password"}
@@ -201,11 +208,11 @@ const PasswordReset = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
@@ -219,7 +226,7 @@ const PasswordReset = () => {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 dark:from-green-700 dark:to-teal-700 dark:hover:from-green-800 dark:hover:to-teal-800"
                 disabled={loading}
               >
                 {loading ? (

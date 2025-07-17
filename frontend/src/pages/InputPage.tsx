@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import JobInput from "./InputPage/JobInput";
 import axios from "axios";
 import toast from "react-hot-toast";
+import SaveCoverLetter from "@/components/SaveCoverLetter";
 // import PDFStep from "./InputPage/PDFStep";
 
 export type Resume = {
@@ -28,6 +29,7 @@ const InputPage = () => {
   });
   const [data, setData] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const handleResumeChange = (newData: Resume) => {
     setResume(newData);
@@ -79,7 +81,7 @@ const InputPage = () => {
     setStep(step - 1);
   };
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center dark:bg-gray-900">
       {step === 1 && (
         <div className="w-full">
           <UploadPage
@@ -97,34 +99,57 @@ const InputPage = () => {
         </div>
       )}
       {step === 3 && (
-        <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4">Generated Cover Letter</h2>
-          <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md">
+        <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:border dark:border-gray-700 mt-5">
+          <h2 className="text-2xl font-bold mb-4 dark:text-white">
+            Generated Cover Letter
+          </h2>
+          <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md dark:bg-gray-700 dark:text-gray-200">
             {data}
           </div>
-          <div className="flex gap-4 items-center mt-4">
+          <div className="flex gap-4 items-center mt-4 flex-wrap">
             <Button
               onClick={() => {
                 navigator.clipboard.writeText(data);
                 toast("Copied to clipboard.");
               }}
+              className="dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
             >
               Copy to Clipboard
             </Button>
             <Button
               onClick={generateCoverLetter}
               disabled={loading || jobData.jobDescription.length < 100}
+              className="dark:bg-blue-700 dark:hover:bg-blue-600"
             >
               {loading ? "Generating..." : "Regenerate"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setSaveDialogOpen(true)}
+              className="dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+            >
+              Save Cover Letter
             </Button>
           </div>
         </div>
       )}
 
+      <SaveCoverLetter
+        content={data}
+        jobTitle={jobData.jobTitle}
+        company={jobData.company}
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+      />
+
       {/* {step === 4 && <PDFStep letter={data} />} */}
 
       <div className="flex gap-4 items-center mt-4">
-        <Button onClick={previousStep} disabled={step === 1}>
+        <Button
+          onClick={previousStep}
+          disabled={step === 1}
+          className="dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+        >
           Previous Step
         </Button>
 
@@ -136,33 +161,24 @@ const InputPage = () => {
                 ? resume.textContent.length < 100
                 : jobData.jobDescription.length < 100
             }
+            className="dark:bg-blue-700 dark:hover:bg-blue-600"
           >
             Next Step
           </Button>
         ) : null}
 
-        {/* <Button
-          onClick={nextStep}
-          disabled={
-            step === 1
-              ? resume.textContent.length < 100
-              : jobData.jobDescription.length < 100
-          }
-        >
-          Next Step
-        </Button> */}
-
         {step === 2 && (
           <Button
             onClick={generateCoverLetter}
             disabled={loading || jobData.jobDescription.length < 100}
+            className="dark:bg-blue-700 dark:hover:bg-blue-600"
           >
             {loading ? "Generating..." : "Generate Cover Letter"}
           </Button>
         )}
       </div>
 
-      <div className="mt-12 mb-10 text-center text-sm text-muted-foreground max-w-2xl mx-auto">
+      <div className="mt-12 mb-10 text-center text-sm text-muted-foreground max-w-2xl mx-auto dark:text-gray-400">
         <p>
           Your data is securely processed and never stored. Our AI analyzes your
           resume to provide personalized career suggestions, keyword

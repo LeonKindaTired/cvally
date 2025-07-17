@@ -10,6 +10,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ForgotPassword from "./pages/ForgotPassword";
 import PasswordReset from "./pages/PasswordReset";
+import UserLetters from "./pages/UserLetters";
 
 function App() {
   return (
@@ -27,9 +28,24 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/upload" element={<InputPage />} />
+        <Route
+          path="/analyze"
+          element={
+            <ProtectedRoute>
+              <InputPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<PasswordReset />} />
+        <Route
+          path="/letters"
+          element={
+            <ProtectedRoute>
+              <UserLetters />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
       <Footer />
     </div>

@@ -67,21 +67,20 @@ const Home = () => {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-br from-blue-50 to-white">
+      <section className="relative py-20 bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
         <div className="container px-4 mx-auto">
           <div className="flex flex-col items-center text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-600 rounded-full mb-6">
+            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-600 rounded-full mb-6 dark:bg-blue-900/50 dark:text-blue-300">
               <Sparkles className="w-4 h-4 mr-2" />
               <span>AI-Powered Resume Analysis</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-bold max-w-3xl mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold max-w-3xl mb-6 dark:text-white">
               Transform Your <span className="text-blue-600">Job Search</span>{" "}
               with AI
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mb-10">
+            <p className="text-xl text-muted-foreground max-w-2xl mb-10 dark:text-gray-400">
               Get resume feedback, ATS optimization, and personalized cover
               letters - all in seconds
             </p>
@@ -97,7 +96,12 @@ const Home = () => {
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="text-lg">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="text-lg dark:bg-gray-800 dark:hover:bg-gray-700"
+              >
                 <Link to="/how-it-works">How It Works</Link>
               </Button>
             </div>
@@ -105,38 +109,52 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="container px-4 mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600">98%</div>
-              <p className="text-muted-foreground">Resume improvement rate</p>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+                98%
+              </div>
+              <p className="text-muted-foreground dark:text-gray-400">
+                Resume improvement rate
+              </p>
             </div>
             <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600">5x</div>
-              <p className="text-muted-foreground">More interviews</p>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+                5x
+              </div>
+              <p className="text-muted-foreground dark:text-gray-400">
+                More interviews
+              </p>
             </div>
             <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600">50k+</div>
-              <p className="text-muted-foreground">Resumes analyzed</p>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+                50k+
+              </div>
+              <p className="text-muted-foreground dark:text-gray-400">
+                Resumes analyzed
+              </p>
             </div>
             <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600">30s</div>
-              <p className="text-muted-foreground">Average analysis time</p>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+                30s
+              </div>
+              <p className="text-muted-foreground dark:text-gray-400">
+                Average analysis time
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20">
+      <section className="py-20 dark:bg-gray-900">
         <div className="container px-4 mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">
               Powerful Resume Optimization
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto dark:text-gray-400">
               Everything you need to create a job-winning resume
             </p>
           </div>
@@ -145,33 +163,43 @@ const Home = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow"
+                className="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow
+                          dark:bg-gray-800 dark:border-gray-700 dark:hover:shadow-gray-800/50"
               >
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+                <div
+                  className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-4
+                                dark:bg-gray-700"
+                >
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-2 dark:text-white">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground dark:text-gray-300">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="container px-4 mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">
               How ResumeAI Works
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto dark:text-gray-400">
               Get job-ready in just a few simple steps
             </p>
           </div>
 
           <div className="relative">
-            <div className="absolute top-16 left-1/2 transform -translate-x-1/2 h-3/4 w-0.5 bg-blue-200 hidden md:block"></div>
+            <div
+              className="absolute top-16 left-1/2 transform -translate-x-1/2 h-3/4 w-0.5 bg-blue-200 hidden md:block
+                            dark:bg-gray-700"
+            ></div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16">
               {steps.map((step, index) => (
@@ -184,7 +212,10 @@ const Home = () => {
                   }`}
                 >
                   <div className="flex-shrink-0">
-                    <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                    <div
+                      className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white
+                                    dark:bg-blue-700"
+                    >
                       {step.icon}
                     </div>
                   </div>
@@ -193,13 +224,15 @@ const Home = () => {
                       index % 2 === 0 ? "md:mt-0 md:mr-6" : "md:mt-0 md:ml-6"
                     }`}
                   >
-                    <div className="text-sm font-semibold text-blue-600">
+                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                       STEP {step.step}
                     </div>
-                    <h3 className="text-xl font-semibold mt-1 mb-2">
+                    <h3 className="text-xl font-semibold mt-1 mb-2 dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="text-muted-foreground">{step.description}</p>
+                    <p className="text-muted-foreground dark:text-gray-300">
+                      {step.description}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -208,7 +241,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <div className="container px-4 mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">

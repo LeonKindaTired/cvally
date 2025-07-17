@@ -163,18 +163,20 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 dark:bg-gray-900">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2">Upload Your Resume</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold mb-2 dark:text-white">
+          Upload Your Resume
+        </h1>
+        <p className="text-muted-foreground dark:text-gray-400">
           Let AI analyze your resume and provide personalized insights
         </p>
       </div>
 
       <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-        <Card className="w-full md:w-1/2 h-[400px] transition-all hover:shadow-lg">
+        <Card className="w-full md:w-1/2 h-[400px] transition-all hover:shadow-lg dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 dark:text-white">
               <Clipboard className="text-blue-500" />
               <span>Paste Resume Text</span>
             </CardTitle>
@@ -185,11 +187,11 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
                 value={textContent}
                 onChange={(e) => updateTextContent(e.target.value)}
                 placeholder="Paste your resume content here..."
-                className="h-full w-full resize-none overflow-y-auto "
+                className="h-full w-full resize-none overflow-y-auto dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500"
               />
               <Button
                 variant="secondary"
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
                 onClick={handlePaste}
                 disabled={isLoading}
               >
@@ -198,7 +200,7 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
               </Button>
             </div>
             <Button
-              className="mt-4 w-full"
+              className="mt-4 w-full dark:bg-blue-700 dark:hover:bg-blue-600"
               disabled={
                 !textContent.trim() ||
                 isLoading ||
@@ -211,13 +213,13 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
           </CardContent>
         </Card>
 
-        <div className="my-4 md:my-0 text-xl font-bold text-muted-foreground">
+        <div className="my-4 md:my-0 text-xl font-bold text-muted-foreground dark:text-gray-400">
           OR
         </div>
 
-        <Card className="w-full md:w-1/2 h-[400px] transition-all hover:shadow-lg">
+        <Card className="w-full md:w-1/2 h-[400px] transition-all hover:shadow-lg dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 dark:text-white">
               <FileText className="text-green-500" />
               <span>Upload Resume File</span>
             </CardTitle>
@@ -226,8 +228,8 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
             <div
               className={`border-2 border-dashed rounded-lg flex-1 flex flex-col items-center justify-center p-6 text-center ${
                 fileName
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-300 hover:border-primary cursor-pointer"
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                  : "border-gray-300 hover:border-primary cursor-pointer dark:border-gray-600 dark:hover:border-blue-500"
               } ${isLoading ? "opacity-70 pointer-events-none" : ""}`}
               onClick={() => !isLoading && fileInputRef.current?.click()}
             >
@@ -243,15 +245,15 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
               {fileName ? (
                 <div className="flex flex-col items-center">
                   <FileText className="w-12 h-12 text-green-500 mb-3" />
-                  <p className="font-medium">{fileName}</p>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="font-medium dark:text-white">{fileName}</p>
+                  <p className="text-sm text-muted-foreground mt-2 dark:text-gray-400">
                     {isLoading
                       ? "Extracting text..."
                       : "File ready for analysis"}
                   </p>
                   <Button
                     variant="ghost"
-                    className="mt-2 text-destructive hover:text-destructive"
+                    className="mt-2 text-destructive hover:text-destructive dark:text-red-400 dark:hover:text-red-300"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleClearFile();
@@ -263,16 +265,16 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
                 </div>
               ) : (
                 <>
-                  <Upload className="w-12 h-12 text-gray-400 mb-4" />
-                  <h3 className="font-medium text-lg mb-1">
+                  <Upload className="w-12 h-12 text-gray-400 mb-4 dark:text-gray-500" />
+                  <h3 className="font-medium text-lg mb-1 dark:text-white">
                     Drag & Drop or Click to Upload
                   </h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-sm dark:text-gray-400">
                     Supported formats: .pdf, .docx, .txt (Max 5MB)
                   </p>
                   <Button
                     variant="outline"
-                    className="mt-4"
+                    className="mt-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
                     disabled={isLoading}
                   >
                     {isLoading ? "Processing..." : "Browse Files"}
@@ -280,7 +282,10 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
                 </>
               )}
             </div>
-            <Button className="mt-4 w-full" disabled={!fileName || isLoading}>
+            <Button
+              className="mt-4 w-full dark:bg-blue-700 dark:hover:bg-blue-600"
+              disabled={!fileName || isLoading}
+            >
               {isLoading ? "Processing..." : "Analyze File"}
             </Button>
           </CardContent>
@@ -289,19 +294,29 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
 
       {textContent && (
         <div className="mt-8">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-0">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 dark:text-white">
                   <FileText className="text-blue-500 h-5 w-5" />
                   <span>Extracted Resume Content</span>
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyToClipboard}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+                  >
                     <Clipboard className="h-4 w-4 mr-2" />
                     Copy Text
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={togglePreview}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={togglePreview}
+                    className="dark:hover:bg-gray-700"
+                  >
                     {showPreview ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
@@ -314,13 +329,17 @@ const UploadPage = ({ onResumeChange, initialResume }: UploadPageProps) => {
 
             {showPreview && (
               <CardContent className="pt-4">
-                <div className="bg-gray-50 rounded-lg border p-4 max-h-[300px] overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm">
+                <div className="bg-gray-50 rounded-lg border p-4 max-h-[300px] overflow-y-auto dark:bg-gray-700 dark:border-gray-600">
+                  <pre className="whitespace-pre-wrap text-sm dark:text-gray-200">
                     {textContent}
                   </pre>
                 </div>
                 <div className="mt-4 flex justify-end">
-                  <Button variant="outline" onClick={handleClearFile}>
+                  <Button
+                    variant="outline"
+                    onClick={handleClearFile}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+                  >
                     Clear Content
                   </Button>
                 </div>

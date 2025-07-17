@@ -173,17 +173,19 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 dark:bg-gray-900">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2">Job Details</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold mb-2 dark:text-white">Job Details</h1>
+        <p className="text-muted-foreground dark:text-gray-400">
           Provide information about the job you're applying for
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="space-y-2">
-          <Label htmlFor="jobTitle">Job Title </Label>
+          <Label htmlFor="jobTitle" className="dark:text-gray-300">
+            Job Title{" "}
+          </Label>
           <Input
             id="jobTitle"
             name="jobTitle"
@@ -191,11 +193,14 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
             onChange={handleChange}
             placeholder="e.g. Software Engineer"
             required
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="company">Company </Label>
+          <Label htmlFor="company" className="dark:text-gray-300">
+            Company{" "}
+          </Label>
           <Input
             id="company"
             name="company"
@@ -203,20 +208,23 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
             onChange={handleChange}
             placeholder="e.g. Google"
             required
+            className="dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500"
           />
         </div>
       </div>
 
       <div className="">
         <div className="flex items-center justify-between mb-4">
-          <Label htmlFor="jobDescription">Job Description </Label>
-          <div className="text-sm text-muted-foreground">
+          <Label htmlFor="jobDescription" className="dark:text-gray-300">
+            Job Description{" "}
+          </Label>
+          <div className="text-sm text-muted-foreground dark:text-gray-400">
             Paste text or upload file (PDF, DOCX, TXT)
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          <Card className="transition-all hover:shadow-lg">
+          <Card className="transition-all hover:shadow-lg dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-6">
               <div className="relative flex-1 min-h-0">
                 <Textarea
@@ -225,11 +233,11 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
                   value={formData.jobDescription}
                   onChange={handleChange}
                   placeholder="Paste job description here..."
-                  className="min-h-[200px] w-full"
+                  className="min-h-[200px] w-full dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500"
                 />
                 <Button
                   variant="secondary"
-                  className="absolute top-2 right-2"
+                  className="absolute top-2 right-2 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
                   onClick={handlePaste}
                   disabled={isLoading}
                 >
@@ -240,13 +248,13 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
             </CardContent>
           </Card>
 
-          <div className="text-center text-xl font-bold text-muted-foreground">
+          <div className="text-center text-xl font-bold text-muted-foreground dark:text-gray-400">
             OR
           </div>
 
-          <Card className="transition-all hover:shadow-lg">
+          <Card className="transition-all hover:shadow-lg dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 dark:text-white">
                 <FileText className="text-green-500" />
                 <span>Upload Job Description File</span>
               </CardTitle>
@@ -255,8 +263,8 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
               <div
                 className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-6 text-center ${
                   fileName
-                    ? "border-green-500 bg-green-50"
-                    : "border-gray-300 hover:border-primary cursor-pointer"
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-300 hover:border-primary cursor-pointer dark:border-gray-600 dark:hover:border-blue-500"
                 } ${isLoading ? "opacity-70 pointer-events-none" : ""}`}
                 onClick={() => !isLoading && fileInputRef.current?.click()}
               >
@@ -272,15 +280,15 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
                 {fileName ? (
                   <div className="flex flex-col items-center">
                     <FileText className="w-12 h-12 text-green-500 mb-3" />
-                    <p className="font-medium">{fileName}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="font-medium dark:text-white">{fileName}</p>
+                    <p className="text-sm text-muted-foreground mt-2 dark:text-gray-400">
                       {isLoading
                         ? "Extracting text..."
                         : "File ready for analysis"}
                     </p>
                     <Button
                       variant="ghost"
-                      className="mt-2 text-destructive hover:text-destructive"
+                      className="mt-2 text-destructive hover:text-destructive dark:text-red-400 dark:hover:text-red-300"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleClearFile();
@@ -292,16 +300,16 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
                   </div>
                 ) : (
                   <>
-                    <Upload className="w-12 h-12 text-gray-400 mb-4" />
-                    <h3 className="font-medium text-lg mb-1">
+                    <Upload className="w-12 h-12 text-gray-400 mb-4 dark:text-gray-500" />
+                    <h3 className="font-medium text-lg mb-1 dark:text-white">
                       Drag & Drop or Click to Upload
                     </h3>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-sm dark:text-gray-400">
                       Supported formats: .pdf, .docx, .txt (Max 5MB)
                     </p>
                     <Button
                       variant="outline"
-                      className="mt-4"
+                      className="mt-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
                       disabled={isLoading}
                     >
                       {isLoading ? "Processing..." : "Browse Files"}
@@ -316,15 +324,20 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
 
       {formData.jobDescription && (
         <div className="mt-6">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-0">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 dark:text-white">
                   <FileText className="text-blue-500 h-5 w-5" />
                   <span>Job Description Preview</span>
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={togglePreview}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={togglePreview}
+                    className="dark:hover:bg-gray-700"
+                  >
                     {showPreview ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
@@ -337,8 +350,8 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
 
             {showPreview && (
               <CardContent className="pt-4">
-                <div className="bg-gray-50 rounded-lg border p-4 max-h-[300px] overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm">
+                <div className="bg-gray-50 rounded-lg border p-4 max-h-[300px] overflow-y-auto dark:bg-gray-700 dark:border-gray-600">
+                  <pre className="whitespace-pre-wrap text-sm dark:text-gray-200">
                     {formData.jobDescription}
                   </pre>
                 </div>
