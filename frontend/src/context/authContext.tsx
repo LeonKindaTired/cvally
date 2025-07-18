@@ -6,12 +6,14 @@ type AuthContextType = {
   session: Session | null;
   role: string | null;
   isLoading: boolean;
+  refreshSession: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   role: null,
   isLoading: true,
+  refreshSession: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -19,40 +21,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refreshSession = async () => {
+    setIsLoading(true);
+    const {
+      data: { session },
+    } = await supabase.auth.refreshSession();
+    setSession(session);
+    setRole(session?.user?.app_metadata?.role || null);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initializeAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setSession(session);
-      setRole(session?.user?.app_metadata.role || null);
+      setRole(session?.user?.app_metadata?.role || null);
       setIsLoading(false);
-    });
+    };
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setRole(session?.user?.app_metadata.role || null);
+    initializeAuth();
 
-        // Handle profile creation for OAuth sign-ins
-        if (event === "SIGNED_IN" && session?.user) {
-          const { data } = await supabase
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setRole(session?.user?.app_metadata?.role || null);
+
+      if (event === "SIGNED_IN" && session?.user) {
+        try {
+          await supabase
             .from("profiles")
-            .select("id")
-            .eq("id", session.user.id)
-            .single();
-
-          if (!data) {
-            await supabase
-              .from("profiles")
-              .insert([{ id: session.user.id, role_id: 3 }]);
-          }
+            .upsert({ id: session.user.id }, { onConflict: "id" });
+        } catch (error) {
+          console.error("Profile creation error:", error);
         }
       }
-    );
 
-    return () => authListener.subscription.unsubscribe();
+      if (event === "SIGNED_IN") {
+        await refreshSession();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, role, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        role,
+        isLoading,
+        refreshSession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

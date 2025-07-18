@@ -8,12 +8,15 @@ import {
   Sun,
   Search,
   LogOut,
+  ArrowUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/supabase/supabase-client";
 import { useThemeContext } from "@/context/themeContext";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/authContext";
+import logo from "../images/cvally.png";
 
 const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,6 +24,7 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const { theme, setTheme } = useThemeContext();
+  const { role } = useAuth();
 
   const changeTheme = () => {
     return theme === "light" ? setTheme("dark") : setTheme("light");
@@ -58,7 +62,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-10">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-blue-500 w-8 h-8 rounded-full" />
+            <img src={logo} className="w-12 h-12" />
             <span className="text-xl font-bold dark:text-white">CVAlly</span>
           </Link>
 
@@ -116,6 +120,14 @@ const Header = () => {
                   My Letters
                 </Link>
               </Button>
+              {role === "user" && (
+                <Button asChild className="gap-2 bg-lime-600">
+                  <div className="flex items-center">
+                    <ArrowUp size={16} />
+                    Upgrade
+                  </div>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex gap-2">

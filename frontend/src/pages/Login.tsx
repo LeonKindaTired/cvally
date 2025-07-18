@@ -13,9 +13,11 @@ import { Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/supabase/supabase-client";
 import toast from "react-hot-toast";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/context/authContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { refreshSession } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("signin");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -24,12 +26,14 @@ const Login = () => {
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setEmail("");
     setPassword("");
     setConfirmPassword("");
+    setIsSuccess(false); // Reset success state
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -43,7 +47,12 @@ const Login = () => {
           password: password,
         });
 
-        if (error) throw new Error(error.message);
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        // Force refresh of session to ensure role is updated
+        await refreshSession();
 
         toast.success("Logged in successfully");
         navigate("/");
@@ -56,17 +65,25 @@ const Login = () => {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password: password,
+          options: {
+            data: {
+              role: "user", // Set default role in metadata
+            },
+          },
         });
 
-        if (error) throw new Error(error.message);
+        if (error) {
+          throw new Error(error.message);
+        }
 
         // Create profile with default role (3 = 'user')
         if (data.user) {
           const { error: profileError } = await supabase
             .from("profiles")
-            .insert([{ id: data.user.id, role_id: 3 }]);
+            .insert([{ id: data.user.id, role: "user" }]);
 
           if (profileError) {
+            // Handle profile creation errors
             if (profileError.code === "23505") {
               console.log("Profile already exists");
             } else {
@@ -76,7 +93,8 @@ const Login = () => {
         }
 
         toast.success("Account created! Check your email for confirmation");
-        setActiveTab("signin");
+        setIsSuccess(true); // Show success state
+        // Don't switch tabs immediately, let user see success message
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -90,15 +108,13 @@ const Login = () => {
     setShowConfirmPassword(!showConfirmPassword);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4">
       <div className="w-full max-w-md">
-        <Button
-          variant="ghost"
-          className="mb-6 dark:text-white dark:hover:bg-gray-800"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
+        <Button variant="ghost" className="mb-6" onClick={() => navigate("/")}>
+          <div className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </div>
         </Button>
 
         <Tabs
@@ -106,40 +122,40 @@ const Login = () => {
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100">
             <TabsTrigger
               value="signin"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
               Sign In
             </TabsTrigger>
             <TabsTrigger
               value="signup"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
               Sign Up
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
-            <Card className="overflow-hidden border-0 shadow-lg dark:border dark:border-gray-700 dark:bg-gray-800 dark:shadow-gray-900/50">
-              <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white dark:from-blue-700 dark:to-indigo-800">
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
                 <CardTitle className="text-2xl">Welcome Back</CardTitle>
-                <CardDescription className="text-blue-100 dark:text-blue-200">
+                <CardDescription className="text-blue-100">
                   Sign in to continue to your account
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6 dark:bg-gray-800">
+              <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <label
                       htmlFor="login-email"
-                      className="text-sm font-medium dark:text-gray-300"
+                      className="text-sm font-medium"
                     >
                       Email Address
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
                         id="login-email"
                         type="email"
@@ -147,7 +163,7 @@ const Login = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500"
+                        className="pl-10"
                       />
                     </div>
                   </div>
@@ -156,19 +172,19 @@ const Login = () => {
                     <div className="flex items-center justify-between">
                       <label
                         htmlFor="login-password"
-                        className="text-sm font-medium dark:text-gray-300"
+                        className="text-sm font-medium"
                       >
                         Password
                       </label>
                       <Link
                         to="/reset-password"
-                        className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        className="text-sm font-medium text-blue-600 hover:underline"
                       >
                         Forgot password?
                       </Link>
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
                         id="login-password"
                         type={showPassword ? "text" : "password"}
@@ -176,11 +192,11 @@ const Login = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500"
+                        className="pl-10 pr-10"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                         onClick={handlePasswordVisibility}
                       >
                         {showPassword ? (
@@ -194,34 +210,38 @@ const Login = () => {
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 dark:from-blue-700 dark:to-indigo-700 dark:hover:from-blue-800 dark:hover:to-indigo-800"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     disabled={isLoading}
                   >
-                    {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Sign In
+                    <div className="flex items-center">
+                      {isLoading && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      <span>Sign In</span>
+                    </div>
                   </Button>
+                </form>
 
-                  <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-200 dark:border-gray-700" />
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="bg-white px-2 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                        Or continue with
-                      </span>
-                    </div>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200" />
                   </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-white px-2 text-gray-500">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
 
-                  <Button
-                    variant="outline"
-                    className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
-                    onClick={() =>
-                      supabase.auth.signInWithOAuth({ provider: "google" })
-                    }
-                    disabled={isLoading}
-                  >
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() =>
+                    supabase.auth.signInWithOAuth({ provider: "google" })
+                  }
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center">
                     <svg
                       className="mr-2 h-4 w-4"
                       xmlns="http://www.w3.org/2000/svg"
@@ -234,139 +254,172 @@ const Login = () => {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
                     Continue with Google
-                  </Button>
-                </form>
+                  </div>
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="signup">
-            <Card className="overflow-hidden border-0 shadow-lg dark:border dark:border-gray-700 dark:bg-gray-800 dark:shadow-gray-900/50">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-teal-600 p-6 text-white dark:from-green-700 dark:to-teal-800">
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-green-500 to-teal-600 p-6 text-white">
                 <CardTitle className="text-2xl">Create Account</CardTitle>
-                <CardDescription className="text-green-100 dark:text-green-200">
+                <CardDescription className="text-green-100">
                   Join us to get started
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6 dark:bg-gray-800">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="signup-email"
-                      className="text-sm font-medium dark:text-gray-300"
-                    >
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500"
-                      />
+              <CardContent className="p-6">
+                {isSuccess ? (
+                  // Success message after signup
+                  <div className="text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                      <Mail className="h-8 w-8 text-green-600" />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="signup-password"
-                      className="text-sm font-medium dark:text-gray-300"
-                    >
-                      Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                      <Input
-                        id="signup-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                        onClick={handlePasswordVisibility}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Must be at least 8 characters
+                    <h3 className="mb-2 text-xl font-semibold">
+                      Check Your Email
+                    </h3>
+                    <p className="mb-6 text-gray-600">
+                      We've sent a confirmation link to{" "}
+                      <span className="font-medium text-green-600">
+                        {email}
+                      </span>
+                      . Please verify your email to activate your account.
                     </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="confirm-password"
-                      className="text-sm font-medium dark:text-gray-300"
+                    <Button
+                      onClick={() => {
+                        setActiveTab("signin");
+                        setIsSuccess(false);
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700"
                     >
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                      <Input
-                        id="confirm-password"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        className="pl-10 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                        onClick={handleConfirmPasswordVisibility}
+                      Back to Sign In
+                    </Button>
+                  </div>
+                ) : (
+                  // Signup form
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="signup-email"
+                        className="text-sm font-medium"
                       >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder="name@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="pl-10"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 dark:from-green-700 dark:to-teal-700 dark:hover:from-green-800 dark:hover:to-teal-800"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Create Account
-                  </Button>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="signup-password"
+                        className="text-sm font-medium"
+                      >
+                        Password
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="signup-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          minLength={8}
+                          className="pl-10 pr-10"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          onClick={handlePasswordVisibility}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Must be at least 8 characters
+                      </p>
+                    </div>
 
-                  <p className="px-8 text-center text-sm text-muted-foreground dark:text-gray-400">
-                    By clicking continue, you agree to our{" "}
-                    <Link
-                      to="/terms"
-                      className="underline underline-offset-4 hover:text-primary dark:text-blue-400"
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="confirm-password"
+                        className="text-sm font-medium"
+                      >
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          minLength={8}
+                          className="pl-10 pr-10"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          onClick={handleConfirmPasswordVisibility}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                      disabled={isLoading}
                     >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      to="/privacy"
-                      className="underline underline-offset-4 hover:text-primary dark:text-blue-400"
-                    >
-                      Privacy Policy
-                    </Link>
-                    .
-                  </p>
-                </form>
+                      <div className="flex items-center">
+                        {isLoading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : null}
+                        Create Account
+                      </div>
+                    </Button>
+
+                    <p className="px-8 text-center text-sm text-muted-foreground">
+                      By clicking continue, you agree to our{" "}
+                      <Link
+                        to="/terms"
+                        className="underline underline-offset-4 hover:text-primary"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        to="/privacy"
+                        className="underline underline-offset-4 hover:text-primary"
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </p>
+                  </form>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

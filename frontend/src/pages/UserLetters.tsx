@@ -7,11 +7,11 @@ import {
   Calendar,
   Trash2,
   Loader2,
-  Search,
+  // Search,
   Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import {
   Card,
   CardHeader,
@@ -143,7 +143,7 @@ const UserLetters = () => {
           </p>
         </div>
 
-        <div className="relative w-full md:w-64">
+        {/* <div className="relative w-full md:w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -152,7 +152,7 @@ const UserLetters = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
-        </div>
+        </div> */}
       </div>
 
       {letters.length === 0 ? (

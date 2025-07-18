@@ -13,6 +13,16 @@ import PasswordReset from "./pages/PasswordReset";
 import UserLetters from "./pages/UserLetters";
 
 function App() {
+  // const upgradeToPremium = async (userId: string) => {
+  //   await supabase
+  //     .from("profiles")
+  //     .update({ role: "premium-user" })
+  //     .eq("id", userId);
+
+  //   // Refresh session to update role
+  //   await supabase.auth.refreshSession();
+  // };
+
   return (
     <div>
       <Toaster />
@@ -31,9 +41,9 @@ function App() {
         <Route
           path="/analyze"
           element={
-            <ProtectedRoute>
-              <InputPage />
-            </ProtectedRoute>
+            // <ProtectedRoute>
+            <InputPage />
+            // </ProtectedRoute>
           }
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -41,9 +51,9 @@ function App() {
         <Route
           path="/letters"
           element={
-            <ProtectedRoute>
-              <UserLetters />
-            </ProtectedRoute>
+            // <ProtectedRoute>
+            <UserLetters />
+            // </ProtectedRoute>
           }
         />
       </Routes>

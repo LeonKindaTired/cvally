@@ -24,9 +24,14 @@ type JobDescriptionData = {
 interface JobInputProps {
   onJobDataChange: (data: JobDescriptionData) => void;
   initialJobData: JobDescriptionData;
+  limitExceeded?: boolean;
 }
 
-const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
+const JobInput = ({
+  onJobDataChange,
+  initialJobData,
+  limitExceeded,
+}: JobInputProps) => {
   const [formData, setFormData] = useState(initialJobData);
   const [fileName, setFileName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -174,6 +179,14 @@ const JobInput = ({ onJobDataChange, initialJobData }: JobInputProps) => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 dark:bg-gray-900">
+      {limitExceeded && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <p className="text-red-700 dark:text-red-300">
+            ⚠️ You've reached your monthly cover letter limit. Upgrade to
+            premium for unlimited generations.
+          </p>
+        </div>
+      )}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold mb-2 dark:text-white">Job Details</h1>
         <p className="text-muted-foreground dark:text-gray-400">

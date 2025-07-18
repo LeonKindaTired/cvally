@@ -174,8 +174,10 @@ const Footer = () => {
               size="sm"
               className="text-muted-foreground dark:text-gray-400"
             >
-              <Mail className="mr-2 h-4 w-4" />
-              contact@CVAlly.com
+              <div className="flex items-center">
+                <Mail className="mr-2 h-4 w-4" />
+                contact@CVAlly.com
+              </div>
             </Button>
             <Button
               onClick={scrollToTop}
