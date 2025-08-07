@@ -122,10 +122,12 @@ const Header = () => {
               </Button>
               {role === "user" && (
                 <Button asChild className="gap-2 bg-lime-600">
-                  <div className="flex items-center">
-                    <ArrowUp size={16} />
-                    Upgrade
-                  </div>
+                  <Link to="/upgrade">
+                    <div className="flex items-center">
+                      <ArrowUp size={16} />
+                      Upgrade
+                    </div>
+                  </Link>
                 </Button>
               )}
             </div>

@@ -7,7 +7,7 @@ export type JobDescriptionData = {
   jobDescription: string;
 };
 
-dotenv.config({ path: ".env.backend" });
+dotenv.config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 

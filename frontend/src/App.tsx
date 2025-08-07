@@ -11,6 +11,7 @@ import Footer from "./components/Footer";
 import ForgotPassword from "./pages/ForgotPassword";
 import PasswordReset from "./pages/PasswordReset";
 import UserLetters from "./pages/UserLetters";
+import SubscriptionPage from "./pages/SubscriptionPage";
 
 function App() {
   // const upgradeToPremium = async (userId: string) => {
@@ -56,6 +57,7 @@ function App() {
             // </ProtectedRoute>
           }
         />
+        <Route path="/upgrade" element={<SubscriptionPage />} />
       </Routes>
       <Footer />
     </div>
