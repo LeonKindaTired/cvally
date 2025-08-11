@@ -7,11 +7,9 @@ import {
   Calendar,
   Trash2,
   Loader2,
-  // Search,
   Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
 import {
   Card,
   CardHeader,
@@ -163,7 +161,7 @@ const UserLetters = () => {
             Your saved cover letters will appear here. Generate one to get
             started!
           </p>
-          <Button onClick={() => (window.location.href = "/")}>
+          <Button onClick={() => (window.location.href = "/analyze")}>
             Create Cover Letter
           </Button>
         </div>

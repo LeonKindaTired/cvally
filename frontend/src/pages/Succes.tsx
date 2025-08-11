@@ -1,30 +1,31 @@
 // src/pages/Success.tsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/authContext";
-import { CheckCircle } from "lucide-react";
-
-const MAX_RETRIES = 5;
+import { CheckCircle, Loader2 } from "lucide-react";
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
-  const { session, refreshSession } = useAuth();
+  const { session, refreshSession, role } = useAuth();
   const [status, setStatus] = useState<"processing" | "success" | "failed">(
     "processing"
   );
   const [message, setMessage] = useState("Processing your upgrade...");
-  const retryCountRef = useRef(0);
 
   const transactionId = searchParams.get("txn_id");
-  const userId = session?.user?.id;
-
   const backendUrl =
     import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
   useEffect(() => {
     const processUpgrade = async () => {
       if (!session) {
-        setTimeout(processUpgrade, 500);
+        setTimeout(processUpgrade, 5000);
+        return;
+      }
+
+      if (role === "premium-user") {
+        setStatus("success");
+        setMessage("You are already premium!");
         return;
       }
 
@@ -61,31 +62,45 @@ const SuccessPage = () => {
     processUpgrade();
   }, [session, transactionId, backendUrl]);
 
+  // Processing state - upgrade in progress
   if (status === "processing") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 mb-4"></div>
-        <p className="text-lg">{message}</p>
+        <Loader2 className="animate-spin h-12 w-12 mb-4" />
+        <p className="text-lg text-center max-w-md">{message}</p>
       </div>
     );
   }
 
+  // Error state
   if (status === "failed") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg max-w-md text-center">
-          <h2 className="text-xl font-bold mb-2">Upgrade Issue</h2>
-          <p>{message}</p>
-          <p className="mt-4">
-            Transaction ID: {transactionId || "N/A"}
-            <br />
-            User ID: {userId || "N/A"}
-          </p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
+          <h2 className="text-xl font-bold text-red-700 mb-2">Upgrade Issue</h2>
+          <p className="text-red-600 mb-4">{message}</p>
+          <div className="text-left text-sm bg-red-100 p-3 rounded">
+            <p>
+              <span className="font-medium">Transaction ID:</span>{" "}
+              {transactionId || "N/A"}
+            </p>
+            <p>
+              <span className="font-medium">User ID:</span>{" "}
+              {session?.user?.id || "N/A"}
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
+  // Success state
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md text-center">
@@ -93,10 +108,10 @@ const SuccessPage = () => {
         <h1 className="text-2xl font-bold mb-4">Upgrade Successful!</h1>
         <p className="mb-6">{message}</p>
         <a
-          href="/analyze"
+          href="/dashboard"
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
         >
-          Start Making Your Cover Letter
+          Go to Dashboard
         </a>
       </div>
     </div>
