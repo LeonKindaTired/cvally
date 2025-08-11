@@ -1,8 +1,10 @@
 // src/pages/Success.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/authContext";
 import { CheckCircle } from "lucide-react";
+
+const MAX_RETRIES = 5;
 
 const SuccessPage = () => {
   const [searchParams] = useSearchParams();
@@ -11,6 +13,7 @@ const SuccessPage = () => {
     "processing"
   );
   const [message, setMessage] = useState("Processing your upgrade...");
+  const retryCountRef = useRef(0);
 
   const transactionId = searchParams.get("txn_id");
   const userId = session?.user?.id;
@@ -20,6 +23,13 @@ const SuccessPage = () => {
 
   useEffect(() => {
     const processUpgrade = async () => {
+      if (!session) {
+        setTimeout(processUpgrade, 500);
+        return;
+      }
+
+      const userId = session.user?.id;
+
       if (!transactionId || !userId) {
         setStatus("failed");
         setMessage("Missing transaction information");
@@ -27,38 +37,20 @@ const SuccessPage = () => {
       }
 
       try {
-        console.log("Calling upgrade endpoint with:", { userId });
-
         const upgradeResponse = await fetch(`${backendUrl}/api/upgrade-user`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
 
-        console.log("Upgrade response status:", upgradeResponse.status);
-
         if (!upgradeResponse.ok) {
           const errorText = await upgradeResponse.text();
-          console.error("Upgrade failed:", errorText);
-          throw new Error("User upgrade failed");
+          throw new Error(`User upgrade failed: ${errorText}`);
         }
 
-        // 2. Refresh session
         await refreshSession();
-
-        // 3. Check transaction status
-        const transactionResponse = await fetch(
-          `${backendUrl}/api/transaction/${transactionId}`
-        );
-        const transactionData = await transactionResponse.json();
-
-        if (transactionData.status === "completed") {
-          setStatus("success");
-          setMessage("Upgrade successful!");
-        } else {
-          // Poll for transaction completion
-          setTimeout(() => processUpgrade(), 3000);
-        }
+        setStatus("success");
+        setMessage("Upgrade successful!");
       } catch (error) {
         console.error("Upgrade error:", error);
         setStatus("failed");
@@ -67,7 +59,7 @@ const SuccessPage = () => {
     };
 
     processUpgrade();
-  }, [transactionId, userId, backendUrl]);
+  }, [session, transactionId, backendUrl]);
 
   if (status === "processing") {
     return (
@@ -101,10 +93,10 @@ const SuccessPage = () => {
         <h1 className="text-2xl font-bold mb-4">Upgrade Successful!</h1>
         <p className="mb-6">{message}</p>
         <a
-          href="/dashboard"
+          href="/analyze"
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
         >
-          Go to Dashboard
+          Start Making Your Cover Letter
         </a>
       </div>
     </div>
