@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import PasswordReset from "./pages/PasswordReset";
 import UserLetters from "./pages/UserLetters";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import SuccessPage from "./pages/Succes";
 
 function App() {
   // const upgradeToPremium = async (userId: string) => {
@@ -23,7 +24,6 @@ function App() {
   //   // Refresh session to update role
   //   await supabase.auth.refreshSession();
   // };
-
   return (
     <div>
       <Toaster />
@@ -58,6 +58,7 @@ function App() {
           }
         />
         <Route path="/upgrade" element={<SubscriptionPage />} />
+        <Route path="/success" element={<SuccessPage />} />
       </Routes>
       <Footer />
     </div>

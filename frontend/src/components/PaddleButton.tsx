@@ -1,15 +1,27 @@
+// src/components/PaddleButton.tsx
 import { useEffect, useState } from "react";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { useThemeContext } from "@/context/themeContext";
 import { Button } from "./ui/button";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "@/context/authContext";
+import { v4 as uuidv4 } from "uuid";
 
 const PaddleButton = () => {
   const [paddle, setPaddle] = useState<Paddle>();
   const { theme } = useThemeContext();
+  const { session } = useAuth();
+
+  // Get backend URL from environment
+  const backendUrl =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
   const environment =
-    import.meta.env.Mode === "production" ? "production" : "sandbox";
+    import.meta.env.MODE === "production" ? "production" : "sandbox";
+  const baseUrl =
+    environment === "production"
+      ? import.meta.env.VITE_BASE_URL_PRODUCTION
+      : import.meta.env.VITE_BASE_URL_SANDBOX;
 
   useEffect(() => {
     try {
@@ -21,7 +33,7 @@ const PaddleButton = () => {
             : import.meta.env.VITE_PADDLE_PUBLIC_KEY_SANDBOX,
       }).then((paddle) => {
         setPaddle(paddle);
-        console.log("Paddel initialized");
+        console.log("Paddle initialized");
       });
     } catch (error) {
       console.error(error);
@@ -29,9 +41,20 @@ const PaddleButton = () => {
   }, []);
 
   const handleCheckout = () => {
-    if (!paddle) return console.error("Paddle not initialized");
+    if (!paddle) {
+      console.error("Paddle not initialized");
+      return;
+    }
 
-    paddle.Checkout.open({
+    if (!session?.user?.id) {
+      console.error("User session is incomplete");
+      return;
+    }
+
+    // Generate unique transaction ID
+    const transactionId = `txn_${uuidv4()}`;
+
+    const options = {
       items: [
         {
           priceId:
@@ -42,15 +65,30 @@ const PaddleButton = () => {
         },
       ],
       settings: {
-        displayMode: "overlay",
+        displayMode: "overlay" as const,
         theme: theme,
-        successUrl: `${
-          environment === "production"
-            ? import.meta.env.VITE_BASE_URL_PRODUCTION
-            : import.meta.env.VITE_BASE_URL_SANDBOX
-        }/success`,
+        // Use transaction ID in success URL
+        successUrl: `${baseUrl}/success?txn_id=${transactionId}`,
       },
-    });
+      // Pass user ID and transaction ID to webhook
+      customData: {
+        user_id: session.user.id,
+        transaction_id: transactionId,
+      },
+    };
+
+    (paddle.Checkout.open as any)(options);
+
+    // Create transaction record immediately
+    fetch(`${backendUrl}/api/create-transaction`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        transaction_id: transactionId,
+        user_id: session.user.id,
+        status: "pending",
+      }),
+    }).catch((err) => console.error("Transaction creation failed:", err));
   };
 
   return (
