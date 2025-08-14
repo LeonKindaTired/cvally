@@ -5,12 +5,14 @@ import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 import fetch from "node-fetch";
 import generationRoutes from "./routes/generation.routes";
+import bodyParser from "body-parser";
 
 // Load environment variables
 dotenv.config();
 
 // Create Express app
 const app = express();
+// app.use(express.json());
 
 // Log environment status on startup
 console.log("🟢 Starting server...");
@@ -50,7 +52,91 @@ app.use((req, res, next) => {
   next();
 });
 
-// Parse JSON bodies
+// Paddle webhook endpoint
+// app.use("/api/paddle-webhook", bodyParser.urlencoded({ extended: false }));
+
+// Paddle Billing webhook: read raw body
+app.post(
+  "/api/paddle-webhook",
+  express.raw({ type: "*/*" }),
+  async (req, res) => {
+    try {
+      const signature = req.headers["paddle-signature"] as string;
+      const rawBody = req.body.toString("utf8");
+
+      if (
+        !verifyPaddleWebhookHMAC(
+          signature,
+          rawBody,
+          process.env.PADDLE_WEBHOOK_SECRET!
+        )
+      ) {
+        console.error("❌ Invalid Paddle webhook signature");
+        return res.status(400).json({ error: "Invalid signature" });
+      }
+
+      const payload = JSON.parse(rawBody);
+      const eventType = payload.event_type;
+      const transactionId = payload.data?.custom_data?.transaction_id;
+      const userId = payload.data?.custom_data?.user_id;
+
+      if (!transactionId || !userId) {
+        return res
+          .status(400)
+          .json({ error: "Missing transaction_id or user_id" });
+      }
+
+      let newStatus: "completed" | "failed" | "pending" = "pending";
+      if (
+        eventType === "transaction.completed" ||
+        eventType === "transaction.payment_succeeded" ||
+        eventType === "transaction.updated"
+      ) {
+        if (
+          payload.data?.status === "paid" ||
+          payload.data?.status === "completed"
+        ) {
+          newStatus = "completed";
+        }
+      } else if (
+        eventType === "transaction.payment_failed" ||
+        eventType === "transaction.failed" ||
+        payload.data?.status === "failed"
+      ) {
+        newStatus = "failed";
+      }
+
+      await supabaseAdmin
+        .from("transactions")
+        .update({
+          status: newStatus,
+          paddle_data: payload,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", transactionId);
+
+      if (newStatus === "completed") {
+        const { error } = await supabaseAdmin
+          .from("profiles")
+          .update({ role: "premium-user" })
+          .eq("id", userId);
+
+        if (error) throw error;
+        console.log(`✅ User ${userId} upgraded via webhook`);
+      } else {
+        console.log(
+          `⚠️ Payment not completed for transaction ${transactionId}, event: ${eventType}`
+        );
+      }
+
+      res.status(200).json({ received: true });
+    } catch (err) {
+      console.error("Webhook error:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 app.use(express.json());
 
 function verifyPaddleWebhook(
@@ -161,127 +247,37 @@ app.post("/api/update-transaction", async (req, res) => {
   }
 });
 
-// Paddle webhook endpoint
-app.post(
-  "/api/paddle-webhook",
-  express.text({ type: "*/*" }),
-  async (req, res) => {
-    console.log("🔔 Received Paddle webhook");
+// HMAC verifier for Paddle Billing
+function verifyPaddleWebhookHMAC(
+  signatureHeader: string | undefined,
+  body: string,
+  secretKey: string
+): boolean {
+  if (!signatureHeader || !secretKey) return false;
 
-    try {
-      const signature = req.headers["paddle-signature"] as string;
-      const rawBody = req.body;
+  const parts = Object.fromEntries(
+    signatureHeader.split(";").map((s) => {
+      const [k, v] = s.trim().split("=");
+      return [k, v];
+    })
+  );
 
-      // Validate signature and secret
-      if (!signature || !process.env.PADDLE_WEBHOOK_SECRET) {
-        console.error("❌ Missing signature or webhook secret");
-        return res
-          .status(401)
-          .json({ error: "Missing signature or webhook secret" });
-      }
+  const ts = parts["ts"];
+  const h1 = parts["h1"];
+  if (!ts || !h1) return false;
 
-      // Verify webhook signature
-      const isValid = verifyPaddleWebhook(
-        signature,
-        rawBody,
-        process.env.PADDLE_WEBHOOK_SECRET
-      );
+  const skewMs = 5 * 60 * 1000;
+  const now = Date.now();
+  const timestampMs = Number(ts) * 1000 || Number(ts);
+  if (isNaN(timestampMs) || Math.abs(now - timestampMs) > skewMs) return false;
 
-      if (!isValid) {
-        console.error("❌ Invalid webhook signature");
-        return res.status(401).json({ error: "Invalid signature" });
-      }
-
-      // Parse webhook event
-      const event = JSON.parse(rawBody);
-      console.log(`🔔 Webhook event: ${event.event_type}`);
-
-      // Handle subscription creation
-      if (event.event_type === "subscription.created") {
-        const { passthrough, user_id } = event.data;
-
-        // Parse passthrough data
-        let userId: string;
-        try {
-          userId = JSON.parse(passthrough).userId;
-          console.log(`🆔 Parsed user ID from passthrough: ${userId}`);
-        } catch (error) {
-          console.error("❌ Error parsing passthrough data:", error);
-          return res.status(400).json({ error: "Invalid passthrough data" });
-        }
-
-        console.log(`⚡ Upgrading user ${userId} to premium`);
-
-        // Update user role
-        const { error: updateError } =
-          await supabaseAdmin.auth.admin.updateUserById(userId, {
-            app_metadata: { role: "premium-user" },
-          });
-
-        if (updateError) {
-          console.error("❌ User update error:", updateError);
-          return res.status(500).json({ error: "User update failed" });
-        }
-
-        // Store purchase record
-        const { error: dbError } = await supabaseAdmin
-          .from("purchases")
-          .insert({
-            user_id: userId,
-            paddle_user_id: user_id,
-            subscription_id: event.data.subscription_id,
-            plan_id: event.data.plan_id,
-            created_at: new Date().toISOString(),
-          });
-
-        if (dbError) {
-          console.error("❌ Database error:", dbError);
-        }
-
-        console.log(`✅ User ${userId} upgraded successfully`);
-      }
-
-      // Handle transaction completion
-      if (event.event_type === "transaction.completed") {
-        const userId = event.data.custom_data?.user_id;
-        const transactionId = event.data.custom_data?.transaction_id;
-
-        if (!userId || !transactionId) {
-          console.error("Missing required fields in webhook payload");
-          return res.status(400).json({ error: "Missing required fields" });
-        }
-
-        // Update transaction status
-        const { error: transactionError } = await supabaseAdmin
-          .from("transactions")
-          .update({
-            status: "completed",
-            paddle_data: event.data,
-          })
-          .eq("id", transactionId);
-
-        if (transactionError) throw transactionError;
-
-        // Upgrade user
-        const { error: userError } = await supabaseAdmin
-          .from("profiles")
-          .update({ role: "premium" })
-          .eq("id", userId);
-
-        if (userError) throw userError;
-
-        console.log(
-          `✅ User ${userId} upgraded via transaction ${transactionId}`
-        );
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("❌ Webhook processing error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
+  const signedPayload = `${ts}:${body}`;
+  const computed = crypto
+    .createHmac("sha256", secretKey)
+    .update(signedPayload)
+    .digest("hex");
+  return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(h1));
+}
 
 // Purchase verification endpoint
 app.post("/api/verify-purchase", async (req, res) => {
@@ -370,23 +366,18 @@ app.post("/api/webhook-debug", express.text({ type: "*/*" }), (req, res) => {
 app.use("/api/generate", generationRoutes);
 
 app.post("/api/upgrade-user", async (req, res) => {
-  console.log("⚡ Received upgrade-user request");
-  try {
-    const { userId } = req.body;
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: "Missing userId" });
 
-    // Update user role optimistically
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({ role: "premium-user" })
-      .eq("id", userId);
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ role: "premium-user" })
+    .eq("id", userId);
 
-    if (error) throw error;
+  if (error) return res.status(500).json({ error: error.message });
 
-    res.status(200).json({ success: true });
-  } catch (error) {
-    console.error("User upgrade error:", error);
-    res.status(500).json({ error: "Failed to upgrade user" });
-  }
+  console.log(`User ${userId} upgraded to premium-user via manual API`);
+  res.status(200).json({ upgraded: true });
 });
 
 // Health check endpoint
