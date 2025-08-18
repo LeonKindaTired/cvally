@@ -141,7 +141,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom row */}
-        <div className="border-t pt-8 pb-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center dark:border-gray-800">
+        <div className="border-t pt-8 pb-6 flex flex-col md:flex-row justify-center items-center gap-4 text-center dark:border-gray-800">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             © {new Date().getFullYear()} CVAlly. All rights reserved.
             <span className="mx-2">|</span>
@@ -158,15 +158,6 @@ const Footer = () => {
             >
               Terms of Service
             </a>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            >
-              English
-            </Button>
           </div>
         </div>
       </div>
