@@ -27,7 +27,7 @@ const SaveCoverLetter = ({
   open,
   onOpenChange,
 }: SaveCoverLetterProps) => {
-  const [title, setTitle] = useState(`${jobTitle} at ${company}`);
+  const [title, setTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -83,14 +83,13 @@ const SaveCoverLetter = ({
             />
           </div>
           <div className="space-y-2">
-            <Label>Job Details</Label>
             <div className="flex gap-4">
               <div className="flex-1">
-                <p className="text-sm font-medium">JobTitle</p>
+                <p className="text-sm font-medium">Job Title</p>
                 <p className="text-sm text-muted-foreground">{jobTitle}</p>
               </div>
               <div className="flex-1">
-                <p className="text-sm">Company</p>
+                <p className="text-sm font-medium">Company</p>
                 <div className="text-sm text-muted-foreground">{company}</div>
               </div>
             </div>

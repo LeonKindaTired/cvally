@@ -14,6 +14,8 @@ import UserLetters from "./pages/UserLetters";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import SuccessPage from "./pages/Succes";
 import CancelSubscriptionPage from "./pages/SettingsPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 function App() {
   // const upgradeToPremium = async (userId: string) => {
@@ -61,6 +63,8 @@ function App() {
         <Route path="/settings" element={<CancelSubscriptionPage />} />
         <Route path="/upgrade" element={<SubscriptionPage />} />
         <Route path="/success" element={<SuccessPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
       </Routes>
       <Footer />
     </div>

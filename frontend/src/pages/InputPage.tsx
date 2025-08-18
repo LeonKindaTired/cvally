@@ -214,21 +214,27 @@ const InputPage = () => {
 
           <div className="flex gap-4 items-center mt-4 flex-wrap">
             <Button
-              onClick={() => {
-                navigator.clipboard.writeText(data);
-                toast("Copied to clipboard.");
-              }}
-              className="dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
-            >
-              Copy to Clipboard
-            </Button>
-            <Button
               onClick={generateCoverLetter}
               disabled={loading || jobData.jobDescription.length < 100}
               className="dark:bg-blue-700 dark:hover:bg-blue-600"
             >
-              {loading ? "Generating..." : "Regenerate"}
+              {loading
+                ? "Generating..."
+                : data.length === 0 || data === ""
+                ? "Generate"
+                : "Regenerate"}
             </Button>
+            {(data.length !== 0 || data !== "") && (
+              <Button
+                onClick={() => {
+                  navigator.clipboard.writeText(data);
+                  toast("Copied to clipboard.");
+                }}
+                className="dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+              >
+                Copy to Clipboard
+              </Button>
+            )}
             <Button
               variant="secondary"
               onClick={() => setSaveDialogOpen(true)}
@@ -272,20 +278,6 @@ const InputPage = () => {
             Next Step
           </Button>
         ) : null}
-
-        {step === 2 && (
-          <Button
-            onClick={generateCoverLetter}
-            disabled={
-              loading ||
-              jobData.jobDescription.length < 100 ||
-              (role !== "premium" && limitExceeded)
-            }
-            className="dark:bg-blue-700 dark:hover:bg-blue-600"
-          >
-            {loading ? "Generating..." : "Generate Cover Letter"}
-          </Button>
-        )}
       </div>
 
       <div className="mt-12 mb-10 text-center text-sm text-muted-foreground max-w-2xl mx-auto dark:text-gray-400">
