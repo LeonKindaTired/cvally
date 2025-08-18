@@ -65,15 +65,22 @@ app.post(
       const signature = req.headers["paddle-signature"] as string;
       const rawBody = req.body.toString("utf8");
 
-      if (
-        !verifyPaddleWebhookHMAC(
-          signature,
-          rawBody,
-          process.env.PADDLE_WEBHOOK_SECRET!
-        )
-      ) {
-        console.error("❌ Invalid Paddle webhook signature");
-        return res.status(400).json({ error: "Invalid signature" });
+      const isLocalTest = process.env.MODE !== "production";
+
+      if (!isLocalTest) {
+        // Only verify HMAC in production
+        if (
+          !verifyPaddleWebhookHMAC(
+            signature,
+            rawBody,
+            process.env.PADDLE_WEBHOOK_SECRET!
+          )
+        ) {
+          console.error("❌ Invalid Paddle webhook signature");
+          return res.status(400).json({ error: "Invalid signature" });
+        }
+      } else {
+        console.log("⚠️ Skipping signature verification for local testing");
       }
 
       const payload = JSON.parse(rawBody);
@@ -82,56 +89,78 @@ app.post(
       const userId = payload.data?.custom_data?.user_id;
       const subscriptionId = payload.data?.subscription_id;
 
-      console.log("payload: ", payload);
+      console.log("📩 Incoming webhook:", eventType, payload);
 
-      if (!transactionId || !userId) {
-        return res
-          .status(400)
-          .json({ error: "Missing transaction_id or user_id" });
-      }
+      // --- Handle TRANSACTION events (upgrade) ---
+      if (eventType.startsWith("transaction.") && transactionId && userId) {
+        let newStatus: "completed" | "failed" | "pending" = "pending";
 
-      let newStatus: "completed" | "failed" | "pending" = "pending";
-      if (
-        eventType === "transaction.completed" ||
-        eventType === "transaction.payment_succeeded" ||
-        eventType === "transaction.updated"
-      ) {
         if (
-          payload.data?.status === "paid" ||
-          payload.data?.status === "completed"
+          eventType === "transaction.completed" ||
+          eventType === "transaction.payment_succeeded" ||
+          eventType === "transaction.updated"
         ) {
-          newStatus = "completed";
+          if (
+            payload.data?.status === "paid" ||
+            payload.data?.status === "completed"
+          ) {
+            newStatus = "completed";
+          }
+        } else if (
+          eventType === "transaction.payment_failed" ||
+          eventType === "transaction.failed" ||
+          payload.data?.status === "failed"
+        ) {
+          newStatus = "failed";
         }
-      } else if (
-        eventType === "transaction.payment_failed" ||
-        eventType === "transaction.failed" ||
-        payload.data?.status === "failed"
-      ) {
-        newStatus = "failed";
+
+        await supabaseAdmin
+          .from("transactions")
+          .update({
+            status: newStatus,
+            paddle_data: payload,
+            subscription_id: subscriptionId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", transactionId);
+
+        if (newStatus === "completed") {
+          const { error } = await supabaseAdmin
+            .from("profiles")
+            .update({ role: "premium-user", subscription_id: subscriptionId })
+            .eq("id", userId);
+
+          if (error) throw error;
+          console.log(`✅ User ${userId} upgraded to premium`);
+        } else {
+          console.log(
+            `⚠️ Payment not completed for transaction ${transactionId}, event: ${eventType}`
+          );
+        }
       }
 
-      await supabaseAdmin
-        .from("transactions")
-        .update({
-          status: newStatus,
-          paddle_data: payload,
-          subscription_id: subscriptionId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", transactionId);
+      // --- Handle SUBSCRIPTION events (downgrade) ---
+      if (
+        eventType === "subscription.canceled" ||
+        eventType === "subscription.expired" ||
+        eventType === "subscription.past_due"
+      ) {
+        const userId = payload.data?.custom_data?.user_id;
+        const subscriptionId = payload.data?.id;
 
-      if (newStatus === "completed") {
-        const { error } = await supabaseAdmin
-          .from("profiles")
-          .update({ role: "premium-user", subscription_id: subscriptionId })
-          .eq("id", userId);
+        if (userId && subscriptionId) {
+          const { error } = await supabaseAdmin
+            .from("profiles")
+            .update({ role: "user", subscription_id: null })
+            .eq("id", userId);
 
-        if (error) throw error;
-        console.log(`✅ User ${userId} upgraded via webhook`);
-      } else {
-        console.log(
-          `⚠️ Payment not completed for transaction ${transactionId}, event: ${eventType}`
-        );
+          if (error) throw error;
+          console.log(`⬇️ User ${userId} downgraded to free plan`);
+        } else {
+          console.warn(
+            `⚠️ Missing userId (${userId}) or subscriptionId (${subscriptionId}) for downgrade`
+          );
+        }
       }
 
       res.status(200).json({ received: true });
