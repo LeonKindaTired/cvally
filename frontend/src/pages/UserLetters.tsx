@@ -33,7 +33,6 @@ import { format } from "date-fns";
 const UserLetters = () => {
   const [letters, setLetters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,20 +48,11 @@ const UserLetters = () => {
       }
 
       try {
-        let query = supabase
+        const { data, error } = await supabase
           .from("cover_letters")
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
-
-        if (searchTerm) {
-          query = query
-            .ilike("title", `%${searchTerm}%`)
-            .ilike("job_title", `%${searchTerm}%`)
-            .ilike("company", `%${searchTerm}%`);
-        }
-
-        const { data, error } = await query;
 
         if (error) throw error;
         setLetters(data || []);
@@ -74,7 +64,7 @@ const UserLetters = () => {
     };
 
     fetchLetters();
-  }, [searchTerm]);
+  }, []); // ✅ no searchTerm here
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -140,17 +130,6 @@ const UserLetters = () => {
             {letters.length} saved {letters.length === 1 ? "letter" : "letters"}
           </p>
         </div>
-
-        {/* <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search letters..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div> */}
       </div>
 
       {letters.length === 0 ? (

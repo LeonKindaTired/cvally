@@ -1,6 +1,4 @@
-import { Zap, ArrowLeft, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Zap, Calendar } from "lucide-react";
 import CancelSubscriptionButton from "@/components/CancelSubscriptionButton";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/authContext";
