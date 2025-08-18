@@ -13,6 +13,7 @@ import PasswordReset from "./pages/PasswordReset";
 import UserLetters from "./pages/UserLetters";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import SuccessPage from "./pages/Succes";
+import CancelSubscriptionPage from "./pages/SettingsPage";
 
 function App() {
   // const upgradeToPremium = async (userId: string) => {
@@ -57,6 +58,7 @@ function App() {
             // </ProtectedRoute>
           }
         />
+        <Route path="/settings" element={<CancelSubscriptionPage />} />
         <Route path="/upgrade" element={<SubscriptionPage />} />
         <Route path="/success" element={<SuccessPage />} />
       </Routes>

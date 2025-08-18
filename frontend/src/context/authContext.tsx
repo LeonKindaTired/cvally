@@ -12,6 +12,7 @@ import type { Session } from "@supabase/supabase-js";
 type AuthContextType = {
   session: Session | null;
   role: string | null;
+  subscriptionId: string | null;
   isLoading: boolean;
   refreshSession: () => Promise<Session | null>;
 };
@@ -19,6 +20,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   session: null,
   role: null,
+  subscriptionId: null,
   isLoading: true,
   refreshSession: async () => null,
 });
@@ -26,6 +28,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false); // Changed to isInitialized
   const initializedRef = useRef(false);
 
@@ -34,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!session) {
         setSession(null);
         setRole(null);
+        setSubscriptionId(null);
         return null;
       }
 
@@ -45,11 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (upsertError) throw upsertError;
 
-        // 2. Get profile role - ADD TIMEOUT HANDLING
+        // 2. Get profile data (role + subscription_id) with timeout
         const { data: profile, error: profileError } = await Promise.race([
           supabase
             .from("profiles")
-            .select("role")
+            .select("role, subscription_id")
             .eq("id", session.user.id)
             .single(),
           new Promise((_, reject) =>
@@ -60,8 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (profileError) throw profileError;
 
         const userRole = profile?.role || "user";
+        const userSubscription = profile?.subscription_id || null;
 
-        // 3. Update session with role
+        // 3. Update session with role + subscription_id
         const updatedSession: Session = {
           ...session,
           user: {
@@ -69,21 +74,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             app_metadata: {
               ...session.user.app_metadata,
               role: userRole,
+              subscription_id: userSubscription,
             },
           },
         };
 
         setSession(updatedSession);
         setRole(userRole);
+        setSubscriptionId(userSubscription);
+
         return updatedSession;
       } catch (error) {
         console.error("Session handling error:", error);
-        // Use role from existing session metadata
+
+        // Use values from existing metadata if possible
         const existingRole = session.user.app_metadata?.role || "user";
+        const existingSubscription =
+          (session.user.app_metadata as any)?.subscription_id || null;
 
         setSession(session);
         setRole(existingRole);
-        return session; // Return original session
+        setSubscriptionId(existingSubscription);
+
+        return session;
       }
     },
     []
@@ -136,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === "SIGNED_OUT") {
         setSession(null);
         setRole(null);
+        setSubscriptionId(null);
       } else if (session) {
         // Optimistic update
         const tempRole = session.user.app_metadata?.role || "user";
@@ -159,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         session,
         role,
+        subscriptionId,
         isLoading: !isInitialized, // Derive loading state
         refreshSession,
       }}

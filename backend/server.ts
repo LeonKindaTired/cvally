@@ -6,6 +6,7 @@ import crypto from "crypto";
 import fetch from "node-fetch";
 import generationRoutes from "./routes/generation.routes";
 import bodyParser from "body-parser";
+import jwt from "jsonwebtoken";
 
 // Load environment variables
 dotenv.config();
@@ -79,6 +80,9 @@ app.post(
       const eventType = payload.event_type;
       const transactionId = payload.data?.custom_data?.transaction_id;
       const userId = payload.data?.custom_data?.user_id;
+      const subscriptionId = payload.data?.subscription_id;
+
+      console.log("payload: ", payload);
 
       if (!transactionId || !userId) {
         return res
@@ -111,6 +115,7 @@ app.post(
         .update({
           status: newStatus,
           paddle_data: payload,
+          subscription_id: subscriptionId,
           updated_at: new Date().toISOString(),
         })
         .eq("id", transactionId);
@@ -118,7 +123,7 @@ app.post(
       if (newStatus === "completed") {
         const { error } = await supabaseAdmin
           .from("profiles")
-          .update({ role: "premium-user" })
+          .update({ role: "premium-user", subscription_id: subscriptionId })
           .eq("id", userId);
 
         if (error) throw error;
@@ -138,6 +143,60 @@ app.post(
 );
 
 app.use(express.json());
+
+app.post("/api/cancel-subscription", async (req, res) => {
+  const { subscriptionId } = req.body;
+
+  if (!subscriptionId) {
+    return res.status(400).json({ error: "subscriptionId is required" });
+  }
+
+  try {
+    const params = new URLSearchParams();
+    params.append("vendor_id", process.env.PADDLE_VENDOR_ID!);
+    params.append("vendor_auth_code", process.env.PADDLE_API_KEY!);
+    params.append("subscription_id", subscriptionId);
+
+    console.log("vendor_id", process.env.PADDLE_VENDOR_ID!);
+    console.log("vendor_auth_code", process.env.PADDLE_API_KEY!);
+    console.log("subscription_id", subscriptionId);
+
+    const paddleUrl =
+      process.env.MODE === "sandbox"
+        ? "https://sandbox-vendors.paddle.com/api/2.0/subscription/users_cancel"
+        : "https://vendors.paddle.com/api/2.0/subscription/users_cancel";
+
+    const response = await fetch(
+      `https://sandbox-api.paddle.com/subscriptions/${subscriptionId}/cancel`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.PADDLE_API_KEY}`,
+        },
+      }
+    );
+
+    const data: any = await response.json();
+
+    if (data) {
+      console.log("Paddle request_id:", data.meta.request_id);
+    }
+
+    // // ✅ Check Paddle success flag
+    // if (!data.success) {
+    //   console.error("Paddle API Error:", data.error);
+    //   return res.status(400).json({
+    //     error: data.error.message || "Failed to cancel subscription",
+    //     code: data.error.code,
+    //   });
+    // }
+
+    res.json({ message: "Subscription cancelled successfully" });
+  } catch (error) {
+    console.error("Cancel subscription error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 function verifyPaddleWebhook(
   signature: string,
@@ -224,7 +283,32 @@ app.get("/api/transaction/:id", async (req, res) => {
   }
 });
 
-// Update transaction endpoint
+app.get("/api/subscription/:id", async (req, res) => {
+  const subscriptionId = req.params.id;
+
+  try {
+    const response = await fetch(
+      `https://sandbox-api.paddle.com/subscriptions/${subscriptionId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PADDLE_API_KEY}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.error("Error fetching subscription:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.post("/api/update-transaction", async (req, res) => {
   try {
     const { transaction_id, status, paddle_data } = req.body;

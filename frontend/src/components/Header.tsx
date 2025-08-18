@@ -9,6 +9,7 @@ import {
   Search,
   LogOut,
   ArrowUp,
+  Settings,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -92,6 +93,15 @@ const Header = () => {
 
           {session ? (
             <div className="flex gap-2">
+              <Button
+                size="icon"
+                variant={isActive("/settings") ? "secondary" : "ghost"}
+                className="hidden sm:flex dark:hover:bg-gray-800"
+              >
+                <Link to="/settings">
+                  <Settings />
+                </Link>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
