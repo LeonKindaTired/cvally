@@ -78,7 +78,15 @@ const TermsOfService = () => {
           courts.
         </p>
 
-        <h2 className="text-2xl font-semibold mt-8 mb-4">8. Contact Us</h2>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">8. Refund Policy</h2>
+        <p className="mb-4">
+          Please note that our policy does not allow for refunds on
+          subscriptions. However, once your subscription is canceled, you will
+          continue to have access to premium features until the next billing
+          date.
+        </p>
+
+        <h2 className="text-2xl font-semibold mt-8 mb-4">9. Contact Us</h2>
         <p className="mb-4">
           If you have any questions about these Terms of Service, please contact
           us at{" "}
