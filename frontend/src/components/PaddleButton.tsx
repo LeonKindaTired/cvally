@@ -21,7 +21,10 @@ const PaddleButton = () => {
   const backendUrl =
     environment === "production"
       ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
-      : import.meta.env.VITE_BACKEND_URL_PRODUCTION;
+      : import.meta.env.VITE_BACKEND_URL_SANDBOX;
+
+  console.log("baseUrl: ", baseUrl);
+  console.log("backendUrl: ", backendUrl);
 
   useEffect(() => {
     try {
@@ -78,6 +81,7 @@ const PaddleButton = () => {
     };
 
     (paddle.Checkout.open as any)(options);
+    console.log("Opening checkout with options:", options);
 
     // Create transaction record immediately
     fetch(`${backendUrl}/api/create-transaction`, {
