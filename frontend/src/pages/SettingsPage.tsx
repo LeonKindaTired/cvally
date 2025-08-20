@@ -7,8 +7,10 @@ const CancelSubscriptionPage = () => {
   const [nextBillingDate, setNextBillingDate] = useState<string>("");
   const { subscriptionId } = useAuth();
 
-  const backendUrl =
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+  const environment = import.meta.env.MODE === "production";
+  const backendUrl = environment
+    ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
+    : import.meta.env.VITE_BACKEND_URL_SANDBOX;
 
   useEffect(() => {
     const fetchSubscriptionDetails = async () => {
@@ -142,8 +144,7 @@ const CancelSubscriptionPage = () => {
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
               All your saved cover letters will remain accessible, but you'll
-              lose access to premium features like unlimited generations and
-              advanced editing.
+              lose access to premium features like unlimited generations.
             </p>
           </div>
         </div>

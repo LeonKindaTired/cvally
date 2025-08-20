@@ -1,29 +1,24 @@
-import { supabase } from "@/supabase/supabase-client";
-import type { Session } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useAuth } from "../context/authContext";
 import { Navigate } from "react-router-dom";
 
-interface ProtectedRouteProps {
+const ProtectedRoute = ({
+  children,
+  requiredRole,
+}: {
   children: React.ReactNode;
-}
+  requiredRole?: string;
+}) => {
+  const { session, role } = useAuth();
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<Session | null>(null);
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
 
-  useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      setLoading(false);
-    };
+  if (requiredRole && role !== requiredRole) {
+    return <Navigate to="/subscription" replace />;
+  }
 
-    getSession();
-  }, []);
+  return <>{children}</>;
+};
 
-  if (loading) return <div>Loading...</div>;
-
-  return session ? children : <Navigate to="/login" replace />;
-}
+export default ProtectedRoute;

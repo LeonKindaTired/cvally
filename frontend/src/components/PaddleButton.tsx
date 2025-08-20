@@ -12,16 +12,16 @@ const PaddleButton = () => {
   const { theme } = useThemeContext();
   const { session } = useAuth();
 
-  // Get backend URL from environment
-  const backendUrl =
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
   const environment =
     import.meta.env.MODE === "production" ? "production" : "sandbox";
   const baseUrl =
     environment === "production"
       ? import.meta.env.VITE_BASE_URL_PRODUCTION
       : import.meta.env.VITE_BASE_URL_SANDBOX;
+  const backendUrl =
+    environment === "production"
+      ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
+      : import.meta.env.VITE_BACKEND_URL_PRODUCTION;
 
   useEffect(() => {
     try {

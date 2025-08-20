@@ -2,9 +2,11 @@ import { useAuth } from "@/context/authContext";
 import { Button } from "./ui/button";
 
 const CancelSubscriptionButton = () => {
-  const { subscriptionId, session } = useAuth(); // make sure session/token is here
-  const backendUrl =
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+  const { subscriptionId, session } = useAuth();
+  const environment = import.meta.env.MODE === "production";
+  const backendUrl = environment
+    ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
+    : import.meta.env.VITE_BACKEND_URL_SANDBOX;
 
   const handleCancelSubscription = async () => {
     try {

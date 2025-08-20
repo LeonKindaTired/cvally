@@ -93,15 +93,17 @@ const Header = () => {
 
           {session ? (
             <div className="flex gap-2">
-              <Button
-                size="icon"
-                variant={isActive("/settings") ? "secondary" : "ghost"}
-                className="hidden sm:flex dark:hover:bg-gray-800"
-              >
-                <Link to="/settings">
-                  <Settings />
-                </Link>
-              </Button>
+              {role === "premium-user" && (
+                <Button
+                  size="icon"
+                  variant={isActive("/settings") ? "secondary" : "ghost"}
+                  className="hidden sm:flex dark:hover:bg-gray-800"
+                >
+                  <Link to="/settings">
+                    <Settings />
+                  </Link>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -132,7 +134,7 @@ const Header = () => {
               </Button>
               {role === "user" && (
                 <Button asChild className="gap-2 bg-lime-600">
-                  <Link to="/upgrade">
+                  <Link to="/subscription">
                     <div className="flex items-center">
                       <ArrowUp size={16} />
                       Upgrade

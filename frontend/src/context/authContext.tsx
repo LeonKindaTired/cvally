@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false); // Changed to isInitialized
+  const [isInitialized, setIsInitialized] = useState(false);
   const initializedRef = useRef(false);
 
   const handleSession = useCallback(
@@ -42,14 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        // 1. Ensure profile exists
         const { error: upsertError } = await supabase
           .from("profiles")
           .upsert({ id: session.user.id }, { onConflict: "id" });
 
         if (upsertError) throw upsertError;
 
-        // 2. Get profile data (role + subscription_id) with timeout
         const { data: profile, error: profileError } = await Promise.race([
           supabase
             .from("profiles")
@@ -66,7 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userRole = profile?.role || "user";
         const userSubscription = profile?.subscription_id || null;
 
-        // 3. Update session with role + subscription_id
         const updatedSession: Session = {
           ...session,
           user: {
@@ -87,7 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Session handling error:", error);
 
-        // Use values from existing metadata if possible
         const existingRole = session.user.app_metadata?.role || "user";
         const existingSubscription =
           (session.user.app_metadata as any)?.subscription_id || null;
@@ -133,14 +129,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Auth initialization error:", error);
       } finally {
         if (isMounted) {
-          setIsInitialized(true); // Set initialized flag
+          setIsInitialized(true);
         }
       }
     };
 
     initializeAuth();
 
-    // Auth state listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -151,12 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRole(null);
         setSubscriptionId(null);
       } else if (session) {
-        // Optimistic update
         const tempRole = session.user.app_metadata?.role || "user";
         setSession(session);
         setRole(tempRole);
 
-        // Background update
         handleSession(session);
       }
     });
@@ -174,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         role,
         subscriptionId,
-        isLoading: !isInitialized, // Derive loading state
+        isLoading: !isInitialized,
         refreshSession,
       }}
     >

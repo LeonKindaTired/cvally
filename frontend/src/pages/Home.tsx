@@ -9,8 +9,11 @@ import {
   Rocket,
   ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/context/authContext";
 
 const Home = () => {
+  const { session } = useAuth();
+
   const features = [
     {
       icon: <Sparkles className="w-6 h-6 text-blue-500" />,
@@ -60,7 +63,7 @@ const Home = () => {
     {
       step: "4",
       title: "Apply with Confidence",
-      description: "Download your optimized resume and cover letter",
+      description: "Saver your optimized cover letter and start applying",
       icon: <Rocket className="w-8 h-8" />,
     },
   ];
@@ -81,8 +84,7 @@ const Home = () => {
             </h1>
 
             <p className="text-xl text-muted-foreground max-w-2xl mb-10 dark:text-gray-400">
-              Get resume feedback, ATS optimization, and personalized cover
-              letters - all in seconds
+              Get tailored cover letters for you based on your CV
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -96,53 +98,16 @@ const Home = () => {
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="text-lg dark:bg-gray-800 dark:hover:bg-gray-700"
-              >
-                <Link to="/how-it-works">How It Works</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-gray-50 dark:bg-gray-900">
-        <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
-                98%
-              </div>
-              <p className="text-muted-foreground dark:text-gray-400">
-                Resume improvement rate
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
-                5x
-              </div>
-              <p className="text-muted-foreground dark:text-gray-400">
-                More interviews
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
-                50k+
-              </div>
-              <p className="text-muted-foreground dark:text-gray-400">
-                Resumes analyzed
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
-                30s
-              </div>
-              <p className="text-muted-foreground dark:text-gray-400">
-                Average analysis time
-              </p>
+              {!session && (
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="text-lg dark:bg-gray-800 dark:hover:bg-gray-700"
+                >
+                  <Link to="/login">Sign Up</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -188,7 +153,7 @@ const Home = () => {
         <div className="container px-4 mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">
-              How ResumeAI Works
+              How CVAlly Works
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto dark:text-gray-400">
               Get job-ready in just a few simple steps
@@ -247,7 +212,7 @@ const Home = () => {
             Ready to Transform Your Job Search?
           </h2>
           <p className="text-xl mb-10 max-w-2xl mx-auto opacity-90">
-            Join thousands of users who landed their dream jobs with ResumeAI
+            Join all of the users who landed their dream jobs with CVAlly
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button

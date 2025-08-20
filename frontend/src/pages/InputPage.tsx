@@ -11,6 +11,7 @@ import {
   getCoverLetterUsage,
   incrementCoverLetterCount,
 } from "@/components/CoverLetterUtils";
+import { Link } from "react-router-dom";
 // import PDFStep from "./InputPage/PDFStep";
 
 export type Resume = {
@@ -277,7 +278,11 @@ const InputPage = () => {
           >
             Next Step
           </Button>
-        ) : null}
+        ) : (
+          <Button className="dark:bg-blue-700 dark:hover:bg-blue-600">
+            <Link to="/letters">My Letters</Link>
+          </Button>
+        )}
       </div>
 
       <div className="mt-12 mb-10 text-center text-sm text-muted-foreground max-w-2xl mx-auto dark:text-gray-400">

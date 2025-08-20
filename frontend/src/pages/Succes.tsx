@@ -14,8 +14,10 @@ const SuccessPage = () => {
   const [message, setMessage] = useState("Processing your upgrade...");
 
   const transactionId = searchParams.get("txn_id");
-  const backendUrl =
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+  const environment = import.meta.env.MODE === "production";
+  const backendUrl = environment
+    ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
+    : import.meta.env.VITE_BACKEND_URL_SANDBOX;
 
   useEffect(() => {
     if (!transactionId) {

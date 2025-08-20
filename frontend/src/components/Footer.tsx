@@ -34,8 +34,8 @@ const Footer = () => {
               </Link>
             </div>
             <p className="text-gray-600 dark:text-gray-300 max-w-xs leading-relaxed">
-              AI-powered resume analysis and optimization for your career
-              success. Transform your job search with intelligent tools.
+              AI-powered resume analysis and cover letter builder. Transform
+              your job search with intelligent tools.
             </p>
             <div className="flex gap-3">
               <Button
@@ -94,7 +94,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/upgrade"
+                  to="/subscription"
                   className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
                 >
                   <div className="w-1 h-1 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -128,12 +128,12 @@ const Footer = () => {
               className="w-full max-w-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 group transition-all"
             >
               <a
-                href="mailto:contact@CVAlly.com"
+                href="mailto:cvallysupport@gmail.com"
                 className="flex items-center gap-2"
               >
                 <Mail className="h-4 w-4 text-blue-500 group-hover:text-blue-600 transition-colors" />
                 <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  contact@CVAlly.com
+                  cvallysupport@gmail.com
                 </span>
               </a>
             </Button>
