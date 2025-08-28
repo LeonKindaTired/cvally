@@ -117,7 +117,6 @@ const JobInput = ({
   const parsePdf = async (data: ArrayBuffer): Promise<string> => {
     return new Promise(async (resolve, reject) => {
       try {
-        // Load PDF.js from CDN
         const script = document.createElement("script");
         script.src =
           "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";

@@ -45,7 +45,6 @@ export const canGenerateCoverLetter = async (userId: string, role: string) => {
   return usage.cover_letter_count < 3;
 };
 
-// Increment usage counter
 export const incrementCoverLetterCount = async (userId: string) => {
   await supabase.rpc("increment_cover_letter_count", { user_id: userId });
 };

@@ -1,11 +1,9 @@
-// src/services/upgrade-role.ts
 import { supabase } from "@/supabase/supabase-client";
 
 export const upgradeUserRole = async (userId: string) => {
   console.log("Upgrade service called for user:", userId);
 
   try {
-    // Get current role
     const { data: currentProfile, error: fetchError } = await supabase
       .from("profiles")
       .select("role")
@@ -19,7 +17,6 @@ export const upgradeUserRole = async (userId: string) => {
 
     console.log("Current role:", currentProfile?.role);
 
-    // Update role
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ role: "premium-user" })
@@ -32,7 +29,6 @@ export const upgradeUserRole = async (userId: string) => {
 
     console.log("Role updated in database");
 
-    // Verify update
     const { data: updatedProfile, error: verifyError } = await supabase
       .from("profiles")
       .select("role")

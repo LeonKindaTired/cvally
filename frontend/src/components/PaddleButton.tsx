@@ -1,4 +1,3 @@
-// src/components/PaddleButton.tsx
 import { useEffect, useState } from "react";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { useThemeContext } from "@/context/themeContext";
@@ -54,7 +53,6 @@ const PaddleButton = () => {
       return;
     }
 
-    // Generate unique transaction ID
     const transactionId = `txn_${uuidv4()}`;
 
     const options = {
@@ -70,10 +68,8 @@ const PaddleButton = () => {
       settings: {
         displayMode: "overlay" as const,
         theme: theme,
-        // Use transaction ID in success URL
         successUrl: `${baseUrl}/success?txn_id=${transactionId}`,
       },
-      // Pass user ID and transaction ID to webhook
       customData: {
         user_id: session.user.id,
         transaction_id: transactionId,
@@ -83,7 +79,6 @@ const PaddleButton = () => {
     (paddle.Checkout.open as any)(options);
     console.log("Opening checkout with options:", options);
 
-    // Create transaction record immediately
     fetch(`${backendUrl}/api/create-transaction`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -1,4 +1,3 @@
-// src/pages/Success.tsx
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/authContext";
@@ -33,7 +32,6 @@ const SuccessPage = () => {
       attempts++;
 
       try {
-        // Fetch transaction status from backend
         const res = await fetch(
           `${backendUrl}/api/transaction/${transactionId}`
         );
@@ -42,7 +40,6 @@ const SuccessPage = () => {
         if (!data.status) throw new Error("Invalid transaction data");
 
         if (data.status === "completed") {
-          // Payment succeeded -> refresh session to update role
           await refreshSession();
           setStatus("success");
           setMessage("Upgrade successful!");

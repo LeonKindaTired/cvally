@@ -2,16 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 import { supabaseAdmin } from "../supabase/supabase";
 
-// Load environment variables
 dotenv.config();
 
-// Create Express router
 const router = express.Router();
 
-// Configure CORS
 const environment = process.env.MODE === "production";
 
-// Paddle Billing webhook: read raw body
 router.post(
   "/paddle-webhook",
   express.raw({ type: "*/*" }),
@@ -28,7 +24,6 @@ router.post(
 
       console.log("📩 Incoming webhook:", eventType, payload);
 
-      // --- Handle TRANSACTION events (upgrade) ---
       if (eventType.startsWith("transaction.") && transactionId && userId) {
         let newStatus: "completed" | "failed" | "pending" = "pending";
 
@@ -76,7 +71,6 @@ router.post(
         }
       }
 
-      // --- Handle SUBSCRIPTION events (downgrade) ---
       if (
         eventType === "subscription.canceled" ||
         eventType === "subscription.expired" ||

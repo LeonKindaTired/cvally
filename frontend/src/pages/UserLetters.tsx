@@ -64,7 +64,7 @@ const UserLetters = () => {
     };
 
     fetchLetters();
-  }, []); // ✅ no searchTerm here
+  }, []);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);

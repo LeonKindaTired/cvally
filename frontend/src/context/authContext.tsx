@@ -113,8 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    console.log("Auth initialization started");
-
     let isMounted = true;
 
     const initializeAuth = async () => {
@@ -139,8 +137,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth event:", event, "Session:", session);
-
       if (event === "SIGNED_OUT") {
         setSession(null);
         setRole(null);

@@ -12,7 +12,6 @@ import {
   incrementCoverLetterCount,
 } from "@/components/CoverLetterUtils";
 import { Link } from "react-router-dom";
-// import PDFStep from "./InputPage/PDFStep";
 
 export type Resume = {
   textContent: string;

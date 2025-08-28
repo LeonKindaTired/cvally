@@ -13,7 +13,6 @@ export async function handlePaddleWebhook(event: any) {
         return;
       }
 
-      // Update transaction record
       await supabase
         .from("transactions")
         .update({
@@ -22,7 +21,6 @@ export async function handlePaddleWebhook(event: any) {
         })
         .eq("id", transactionId);
 
-      // Ensure user is upgraded
       await supabase
         .from("profiles")
         .update({ role: "premium" })

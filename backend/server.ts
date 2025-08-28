@@ -5,18 +5,14 @@ import cors from "cors";
 import generationRoutes from "./routes/generation.routes";
 import paddleRoutes from "./routes/paddle.routes";
 
-// Load environment variables
 dotenv.config();
 
-// Create Express app
 const app = express();
 
-// Log environment status on startup
 console.log("🟢 Starting server...");
 console.log(`🔧 Environment: ${process.env.NODE_ENV || "sandbox"}`);
 console.log(`🚀 Mode: ${process.env.MODE || "sandbox"}`);
 
-// Configure CORS
 const MODE = process.env.MODE === "production";
 const allowedOrigin = MODE
   ? process.env.FRONTEND_URL_PRODUCTION
@@ -32,7 +28,6 @@ app.use(
   })
 );
 
-// Middleware to log all incoming requests
 app.use((req, res, next) => {
   console.log(
     `📥 [${new Date().toISOString()}] ${req.method} ${req.path} ${
@@ -46,10 +41,8 @@ app.use("/api", paddleRoutes);
 
 app.use(express.json());
 
-// Existing routes
 app.use("/api/generate", generationRoutes);
 
-// Health check endpoint
 app.get("/api/health", (req, res) => {
   console.log("🩺 Health check passed");
   res.json({
@@ -61,7 +54,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Global error handler
 app.use(
   (
     err: any,
@@ -79,7 +71,6 @@ app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

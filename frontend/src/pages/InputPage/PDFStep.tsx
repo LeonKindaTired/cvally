@@ -5,7 +5,6 @@ import jsPDF from "jspdf";
 import { Loader2 } from "lucide-react";
 import * as pdfjs from "pdfjs-dist";
 
-// Initialize PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.js",
   import.meta.url
@@ -25,16 +24,13 @@ const PDFStep = ({ letter }: PDFStepProps) => {
     const generatePdf = () => {
       setIsLoading(true);
 
-      // Create new PDF document
       const doc = new jsPDF();
       const margin = 15;
       const pageWidth = doc.internal.pageSize.getWidth();
       const maxWidth = pageWidth - margin * 2;
 
-      // Split text into lines
       const lines = doc.splitTextToSize(letter, maxWidth);
 
-      // Add text to PDF
       let yPosition = margin;
 
       lines.forEach((line: string) => {
@@ -44,16 +40,14 @@ const PDFStep = ({ letter }: PDFStepProps) => {
         }
 
         doc.text(line, margin, yPosition);
-        yPosition += 10; // Line height
+        yPosition += 10;
       });
 
-      // Generate Blob URL
       const blob = doc.output("blob");
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
       setIsLoading(false);
 
-      // Cleanup function
       return () => URL.revokeObjectURL(url);
     };
 

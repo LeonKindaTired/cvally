@@ -33,7 +33,7 @@ const Login = () => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setIsSuccess(false); // Reset success state
+    setIsSuccess(false);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -51,7 +51,6 @@ const Login = () => {
           throw new Error(error.message);
         }
 
-        // Force refresh of session to ensure role is updated
         await refreshSession();
 
         toast.success("Logged in successfully");
@@ -61,13 +60,12 @@ const Login = () => {
           throw new Error("Passwords don't match");
         }
 
-        // Create auth user
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password: password,
           options: {
             data: {
-              role: "user", // Set default role in metadata
+              role: "user",
             },
           },
         });
@@ -76,14 +74,12 @@ const Login = () => {
           throw new Error(error.message);
         }
 
-        // Create profile with default role (3 = 'user')
         if (data.user) {
           const { error: profileError } = await supabase
             .from("profiles")
             .insert([{ id: data.user.id, role: "user" }]);
 
           if (profileError) {
-            // Handle profile creation errors
             if (profileError.code === "23505") {
               console.log("Profile already exists");
             } else {
@@ -93,8 +89,7 @@ const Login = () => {
         }
 
         toast.success("Account created! Check your email for confirmation");
-        setIsSuccess(true); // Show success state
-        // Don't switch tabs immediately, let user see success message
+        setIsSuccess(true);
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -270,7 +265,6 @@ const Login = () => {
               </CardHeader>
               <CardContent className="p-6">
                 {isSuccess ? (
-                  // Success message after signup
                   <div className="text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                       <Mail className="h-8 w-8 text-green-600" />
@@ -296,7 +290,6 @@ const Login = () => {
                     </Button>
                   </div>
                 ) : (
-                  // Signup form
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <label
