@@ -12,6 +12,11 @@ import {
   upsertProduct,
 } from "../supabase/users";
 import { getSubscriptionId } from "../supabase/subscriptions";
+import {
+  insertTransaction,
+  updateTransactionStatus,
+  getTransactionByOrderId,
+} from "../supabase/transactions";
 
 const router = express.Router();
 
@@ -25,7 +30,10 @@ const subscriptionEvents = [
   "subscription_expired",
 ];
 
+const transactionEvents = ["order_created", "order_refunded"];
+
 interface Subscription {
+  id: string;
   attributes: {
     product_id: number;
     variant_id: number;
@@ -43,6 +51,23 @@ interface Subscription {
   };
 }
 
+interface Order {
+  id: string;
+  attributes: {
+    order_number: string;
+    customer_id: number;
+    total: number;
+    status: string;
+    refunded: boolean;
+    currency: string;
+    created_at: string;
+    first_order_item: {
+      product_id: number;
+      variant_id: number;
+    };
+  };
+}
+
 interface LemonSqueezyWebhookData {
   meta: {
     event_name: string;
@@ -50,7 +75,7 @@ interface LemonSqueezyWebhookData {
       user_id: string;
     };
   };
-  data: Subscription;
+  data: Subscription | Order;
 }
 
 interface SubscriptionData {
@@ -64,6 +89,16 @@ interface SubscriptionData {
   endsAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+function isSubscription(data: any): data is Subscription {
+  return (
+    data.attributes && data.attributes.first_subscription_item !== undefined
+  );
+}
+
+function isOrder(data: any): data is Order {
+  return data.attributes && data.attributes.first_order_item !== undefined;
 }
 
 const verifyWebhookSignature = (
@@ -104,7 +139,6 @@ const verifyWebhookSignature = (
   }
 
   try {
-    // Use the raw body directly (it should be a Buffer from the middleware)
     const hmac = crypto.createHmac("sha256", secret);
     hmac.update(rawBody);
     const calculatedSignature = hmac.digest("hex");
@@ -136,21 +170,24 @@ router.post(
       console.log("🔄 Processing webhook...");
 
       const rawBody = (req as any).rawBody;
-
       if (!rawBody) {
         console.error("❌ Raw body is missing");
         return res.status(400).send("Missing raw body");
       }
 
       const data = JSON.parse(rawBody.toString()) as LemonSqueezyWebhookData;
-
       console.log("📨 Webhook event:", data.meta.event_name);
 
+      const userId = data.meta.custom_data?.user_id;
+      if (!userId) {
+        console.error("❌ User ID not found in custom_data");
+        return res.status(400).send("User ID not found");
+      }
+
       if (subscriptionEvents.includes(data.meta.event_name)) {
-        const userId = data.meta.custom_data?.user_id;
-        if (!userId) {
-          console.error("❌ User ID not found in custom_data");
-          return res.status(400).send("User ID not found");
+        if (!isSubscription(data.data)) {
+          console.error("❌ Invalid subscription data structure");
+          return res.status(400).send("Invalid subscription data");
         }
 
         const subscription = data.data;
@@ -188,6 +225,37 @@ router.post(
 
         await Promise.all([productUpsert, customerUpsert]);
 
+        const subscriptionStatus = subscription.attributes.status;
+        if (["active", "trialing"].includes(subscriptionStatus)) {
+          const { error } = await supabaseAdmin
+            .from("profiles")
+            .update({
+              role: "premium-user",
+              subscription_id:
+                subscription.attributes.first_subscription_item.subscription_id.toString(),
+            })
+            .eq("id", userId);
+
+          if (error) console.error("❌ Error upgrading user:", error);
+          else console.log(`✅ User ${userId} upgraded via subscription`);
+        } else if (
+          ["cancelled", "expired", "paused"].includes(subscriptionStatus)
+        ) {
+          const { error } = await supabaseAdmin
+            .from("profiles")
+            .update({
+              role: "user",
+              subscription_id: null,
+            })
+            .eq("id", userId);
+
+          if (error) console.error("❌ Error downgrading user:", error);
+          else
+            console.log(
+              `📉 User ${userId} downgraded via subscription status: ${subscriptionStatus}`
+            );
+        }
+
         const subscriptionData: SubscriptionData = {
           customerId: customerId.toString(),
           subscriptionId:
@@ -202,11 +270,111 @@ router.post(
           updatedAt: subscription.attributes.updated_at,
         };
 
-        console.log("✅ Webhook processed successfully");
-        return res.status(200).send("Order Complete");
+        console.log("✅ Subscription webhook processed successfully");
+        return res.status(200).send("Subscription Processed");
+      } else if (transactionEvents.includes(data.meta.event_name)) {
+        if (!isOrder(data.data)) {
+          console.error("❌ Invalid order data structure");
+          return res.status(400).send("Invalid order data");
+        }
+
+        const order = data.data;
+        const orderId = parseInt(order.id);
+        const customerId = order.attributes.customer_id;
+        const productId = order.attributes.first_order_item.product_id;
+        const variantId = order.attributes.first_order_item.variant_id;
+
+        console.log("💳 Transaction data:", {
+          userId,
+          orderId,
+          customerId,
+          productId,
+          variantId,
+          status: order.attributes.status,
+          total: order.attributes.total,
+        });
+
+        const existingTransaction = await getTransactionByOrderId(
+          supabaseAdmin,
+          orderId
+        );
+
+        if (data.meta.event_name === "order_created") {
+          if (existingTransaction) {
+            console.log("🔄 Updating existing transaction");
+            await updateTransactionStatus(
+              supabaseAdmin,
+              orderId,
+              order.attributes.status,
+              order.attributes.refunded
+            );
+          } else {
+            console.log("🆕 Creating new transaction");
+            await insertTransaction(supabaseAdmin, {
+              userId,
+              orderId,
+              customerId,
+              productId,
+              variantId,
+              orderNumber: order.attributes.order_number,
+              total: order.attributes.total,
+              status: order.attributes.status,
+              refunded: order.attributes.refunded,
+              currency: order.attributes.currency,
+              createdAt: order.attributes.created_at,
+            });
+          }
+
+          if (order.attributes.status === "paid") {
+            try {
+              const { error } = await supabaseAdmin
+                .from("profiles")
+                .update({
+                  role: "premium-user",
+                  subscription_id: orderId.toString(),
+                })
+                .eq("id", userId);
+
+              if (error) throw error;
+              console.log(
+                `✅ User ${userId} upgraded to premium via successful order`
+              );
+            } catch (error) {
+              console.error("❌ Error upgrading user to premium:", error);
+            }
+          }
+        } else if (data.meta.event_name === "order_refunded") {
+          if (existingTransaction) {
+            console.log("💸 Processing refund");
+            await updateTransactionStatus(
+              supabaseAdmin,
+              orderId,
+              "refunded",
+              true
+            );
+
+            try {
+              const { error } = await supabaseAdmin
+                .from("profiles")
+                .update({
+                  role: "user",
+                  subscription_id: null,
+                })
+                .eq("id", userId);
+
+              if (error) throw error;
+              console.log(`📉 User ${userId} downgraded due to refund`);
+            } catch (error) {
+              console.error("❌ Error downgrading user:", error);
+            }
+          }
+        }
+
+        console.log("✅ Transaction webhook processed successfully");
+        return res.status(200).send("Transaction Processed");
       }
 
-      console.log("ℹ️ Non-subscription event received");
+      console.log("ℹ️ Unhandled event received:", data.meta.event_name);
       return res.status(200).send("Webhook received");
     } catch (error) {
       console.error("❌ Webhook processing error:", error);
@@ -308,6 +476,27 @@ router.get("/portal/:userId", async (req: Request, res: Response) => {
   } catch (err) {
     console.error("❌ Customer portal error:", err);
     res.status(500).json({ error: "Failed to create portal URL" });
+  }
+});
+
+router.get("/transactions/:userId", async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const { data: transactions, error } = await supabaseAdmin
+      .from("transactions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    res.json(transactions);
+  } catch (err) {
+    console.error("❌ Error fetching transactions:", err);
+    res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
 
