@@ -22,9 +22,6 @@ const PaddleButton = () => {
       ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
       : import.meta.env.VITE_BACKEND_URL_SANDBOX;
 
-  console.log("baseUrl: ", baseUrl);
-  console.log("backendUrl: ", backendUrl);
-
   useEffect(() => {
     try {
       initializePaddle({
@@ -35,7 +32,6 @@ const PaddleButton = () => {
             : import.meta.env.VITE_PADDLE_PUBLIC_KEY_SANDBOX,
       }).then((paddle) => {
         setPaddle(paddle);
-        console.log("Paddle initialized");
       });
     } catch (error) {
       console.error(error);
@@ -77,7 +73,6 @@ const PaddleButton = () => {
     };
 
     (paddle.Checkout.open as any)(options);
-    console.log("Opening checkout with options:", options);
 
     fetch(`${backendUrl}/api/create-transaction`, {
       method: "POST",
