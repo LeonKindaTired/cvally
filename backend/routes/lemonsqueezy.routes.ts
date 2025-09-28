@@ -30,6 +30,16 @@ const subscriptionEvents = [
   "subscription_expired",
 ];
 
+const LEMON_API_KEY =
+  process.env.MODE === "sandbox"
+    ? process.env.LEMON_API_KEY_TEST
+    : process.env.LEMON_API_KEY_PROD;
+
+const LEMON_WEBHOOK_SECRET =
+  process.env.MODE === "sandbox"
+    ? process.env.LEMON_WEBHOOK_SECRET_TEST
+    : process.env.LEMON_WEBHOOK_SECRET_PROD;
+
 const transactionEvents = ["order_created", "order_refunded"];
 
 interface Subscription {
@@ -108,7 +118,7 @@ const verifyWebhookSignature = (
 ) => {
   console.log("🔐 Verifying webhook signature...");
 
-  if (!process.env.LEMON_WEBHOOK_SECRET) {
+  if (!LEMON_WEBHOOK_SECRET) {
     console.error("❌ LEMON_WEBHOOK_SECRET is not set");
     return res.status(500).send("Lemon Squeezy Webhook Secret not set in .env");
   }
@@ -120,7 +130,7 @@ const verifyWebhookSignature = (
     return res.status(400).send("Missing raw body");
   }
 
-  const secret = process.env.LEMON_WEBHOOK_SECRET;
+  const secret = LEMON_WEBHOOK_SECRET;
   const signatureHeader = req.get("X-Signature") || "";
 
   console.log("📊 Debug info:", {
@@ -409,7 +419,7 @@ router.get("/products", async (req, res) => {
     console.log("🛍️ Fetching products...");
     const response = await fetch("https://api.lemonsqueezy.com/v1/products", {
       headers: {
-        Authorization: `Bearer ${process.env.LEMON_API_KEY_TEST}`,
+        Authorization: `Bearer ${LEMON_API_KEY}`,
         Accept: "application/vnd.api+json",
       },
     });
@@ -429,7 +439,7 @@ router.get("/products", async (req, res) => {
           `https://api.lemonsqueezy.com/v1/products/${product.id}/variants`,
           {
             headers: {
-              Authorization: `Bearer ${process.env.LEMON_API_KEY_TEST}`,
+              Authorization: `Bearer ${LEMON_API_KEY}`,
               Accept: "application/vnd.api+json",
             },
           }
@@ -525,7 +535,7 @@ router.get("/subscriptions/:id", async (req, res) => {
       `https://api.lemonsqueezy.com/v1/subscriptions/${req.params.id}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.LEMON_API_KEY_TEST}`,
+          Authorization: `Bearer ${LEMON_API_KEY}`,
           Accept: "application/vnd.api+json",
         },
       }
@@ -545,7 +555,7 @@ router.post("/subscriptions/:id/cancel", async (req, res) => {
       {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${process.env.LEMON_API_KEY_TEST}`,
+          Authorization: `Bearer ${LEMON_API_KEY}`,
           "Content-Type": "application/vnd.api+json",
           Accept: "application/vnd.api+json",
         },

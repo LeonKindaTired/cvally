@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import cors from "cors";
 
 import generationRoutes from "./routes/generation.routes";
-import paddleRoutes from "./routes/paddle.routes";
 import lemonRoutes from "./routes/lemonsqueezy.routes";
 
 dotenv.config();
@@ -47,7 +46,6 @@ app.post(
   }
 );
 
-app.use("/api", paddleRoutes);
 app.use("/api/lemon", lemonRoutes);
 
 app.use(express.json());

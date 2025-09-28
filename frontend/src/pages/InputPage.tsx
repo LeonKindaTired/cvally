@@ -42,6 +42,10 @@ const InputPage = () => {
   const [coverLetterCount, setCoverLetterCount] = useState(0);
   const [limitExceeded, setLimitExceeded] = useState(false);
   const { session, role } = useAuth();
+  const BackendUrl =
+    import.meta.env.VITE_NODE_ENV === "sandbox"
+      ? import.meta.env.VITE_BACKEND_URL_SANDBOX
+      : import.meta.env.VITE_BACKEND_URL_PRODUCTION;
 
   const handleResumeChange = (newData: Resume) => {
     setResume(newData);
@@ -83,7 +87,7 @@ const InputPage = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/generate/generate-cv",
+        `${BackendUrl}/api/generate/generate-cv`,
         {
           resumeText: resume.textContent,
           jobDescription: jobData,

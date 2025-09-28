@@ -13,7 +13,7 @@ const SuccessPage = () => {
   const [message, setMessage] = useState("Processing your upgrade...");
 
   const transactionId = searchParams.get("txn_id");
-  const environment = import.meta.env.MODE === "production";
+  const environment = import.meta.env.VITE_NODE_ENV === "production";
   const backendUrl = environment
     ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
     : import.meta.env.VITE_BACKEND_URL_SANDBOX;

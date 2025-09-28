@@ -9,11 +9,23 @@ import {
 
 const LEMONSQUEEZY_API_URL = "https://api.lemonsqueezy.com/v1";
 
+const LEMON_API_KEY =
+  process.env.MODE === "sandbox"
+    ? process.env.LEMON_API_KEY_TEST
+    : process.env.LEMON_API_KEY_PROD;
+
+const PUBLIC_APP_URL =
+  process.env.MODE === "sandbox"
+    ? process.env.FRONTEND_URL_SANDBOX
+    : process.env.FRONTEND_URL_PRODUCTION;
+
 export async function configureLemonSqueezy() {
   const requiredVars = [
     "LEMON_API_KEY_TEST",
+    "LEMON_API_KEY_PROD",
     "LEMON_STORE_ID",
-    "LEMON_WEBHOOK_SECRET",
+    "LEMON_WEBHOOK_SECRET_TEST",
+    "LEMON_WEBHOOK_SECRET_PROD",
   ];
 
   const missingVars = requiredVars.filter((varName) => !process.env[varName]);
@@ -26,7 +38,7 @@ export async function configureLemonSqueezy() {
     };
   }
 
-  lemonSqueezySetup({ apiKey: process.env.LEMON_API_KEY_TEST });
+  lemonSqueezySetup({ apiKey: LEMON_API_KEY });
   return { error: null };
 }
 
@@ -121,8 +133,7 @@ export async function createCheckoutUrl({
       "Lemonsqueezy store ID is not defined in environment variables."
     );
   }
-  //TO DO: Check for env variable PUBLIC_APP_URL
-  if (!process.env.PUBLIC_APP_URL) {
+  if (!PUBLIC_APP_URL) {
     console.warn("PUBLIC_APP_URL is not defined, using default redirect URL.");
     return null;
   }
@@ -144,9 +155,7 @@ export async function createCheckoutUrl({
       },
       productOptions: {
         enabledVariants: [parseInt(variantId)],
-        redirectUrl: `${
-          process.env.PUBLIC_APP_URL || "http://localhost:5173"
-        }/`,
+        redirectUrl: `${PUBLIC_APP_URL || "http://localhost:5173"}/`,
       },
     }
   );

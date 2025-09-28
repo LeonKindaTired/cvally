@@ -26,6 +26,11 @@ export function PricingCard({ product }: PricingCardProps) {
   const [isPending, setIsPending] = useState(false);
   const { session } = useAuth();
 
+  const BackendUrl =
+    import.meta.env.VITE_NODE_ENV === "sandbox"
+      ? import.meta.env.VITE_BACKEND_URL_SANDBOX
+      : import.meta.env.VITE_BACKEND_URL_PRODUCTION;
+
   const formatProductName = (name: string) => {
     return name
       .replace("subscription_", "")
@@ -43,7 +48,7 @@ export function PricingCard({ product }: PricingCardProps) {
 
     setIsPending(true);
     try {
-      const res = await fetch("http://localhost:5000/api/lemon/checkout", {
+      const res = await fetch(`${BackendUrl}/api/lemon/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -8,11 +8,16 @@ const SubscriptionPage = () => {
   const [isPending, setIsPending] = useState(false);
   const [localLoading, setLocalLoading] = useState(true);
 
+  const BackendUrl =
+    import.meta.env.VITE_NODE_ENV === "sandbox"
+      ? import.meta.env.VITE_BACKEND_URL_SANDBOX
+      : import.meta.env.VITE_BACKEND_URL_PRODUCTION;
+
   useEffect(() => {
     if (!isLoading) {
       const fetchProduct = async () => {
         try {
-          const res = await fetch("http://localhost:5000/api/lemon/products");
+          const res = await fetch(`${BackendUrl}/api/lemon/products`);
           const data = await res.json();
           console.log("LemonSqueezy API Response:", data);
 
@@ -41,7 +46,7 @@ const SubscriptionPage = () => {
 
     setIsPending(true);
     try {
-      const res = await fetch("http://localhost:5000/api/lemon/checkout", {
+      const res = await fetch(`${BackendUrl}/api/lemon/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
