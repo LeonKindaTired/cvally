@@ -17,7 +17,7 @@ export default function AccountPage() {
             name: data[0].name,
             price_formatted: "$" + (data[0].price / 100).toFixed(2),
             description: data[0].description || "",
-            variant_id: data[0].variant_id, // This should now be defined
+            variant_id: data[0].variant_id,
             test_mode: data[0].test_mode,
           });
         }

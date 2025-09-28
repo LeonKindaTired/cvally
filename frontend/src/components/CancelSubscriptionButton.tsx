@@ -1,44 +1,91 @@
-import { useAuth } from "@/context/authContext";
+import { useState } from "react";
 import { Button } from "./ui/button";
+import { useAuth } from "@/context/authContext";
 
-const CancelSubscriptionButton = () => {
-  const { subscriptionId, session } = useAuth();
+interface CancelSubscriptionButtonProps {
+  subscriptionId: string;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+const CancelSubscriptionButton = ({
+  subscriptionId,
+  onSuccess,
+  onError,
+}: CancelSubscriptionButtonProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { session } = useAuth();
+
   const environment = import.meta.env.MODE === "production";
   const backendUrl = environment
     ? import.meta.env.VITE_BACKEND_URL_PRODUCTION
     : import.meta.env.VITE_BACKEND_URL_SANDBOX;
 
   const handleCancelSubscription = async () => {
-    try {
-      const res = await fetch(`${backendUrl}/api/cancel-subscription`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ subscriptionId }),
-      });
+    if (!subscriptionId) {
+      onError?.("No subscription ID found");
+      return;
+    }
 
-      if (!res.ok) {
-        const err = await res.json();
-        console.error("Cancel failed:", err);
-        return;
+    if (
+      !confirm(
+        "Are you sure you want to cancel your subscription? You'll retain access until the end of your billing period."
+      )
+    ) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/lemon/subscriptions/${subscriptionId}/cancel`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: session?.user.id,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to cancel subscription");
       }
 
-      const data = await res.json();
-      console.log("Subscription canceled:", data);
-    } catch (err) {
-      console.error("Request error:", err);
+      const result = await response.json();
+
+      if (result.success) {
+        onSuccess?.();
+        alert(
+          "Your subscription has been cancelled successfully. You'll retain access until the end of your billing period."
+        );
+      } else {
+        throw new Error(result.error || "Failed to cancel subscription");
+      }
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      onError?.(error instanceof Error ? error.message : "An error occurred");
+      alert(
+        "Failed to cancel subscription. Please try again or contact support."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <Button
-      className="px-10 py-6 text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-      size="lg"
       onClick={handleCancelSubscription}
+      disabled={isLoading}
+      variant="destructive"
+      size="lg"
+      className="w-full max-w-xs"
     >
-      Cancel Subscription
+      {isLoading ? "Cancelling..." : "Cancel Subscription"}
     </Button>
   );
 };

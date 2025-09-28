@@ -1,19 +1,66 @@
-import PaddleButton from "@/components/PaddleButton";
 import { useAuth } from "@/context/authContext";
 import { BadgeCheck, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const SubscriptionPage = () => {
-  const { isLoading } = useAuth();
-
+  const { isLoading, session, role } = useAuth();
+  const [product, setProduct] = useState<any | null>(null);
+  const [isPending, setIsPending] = useState(false);
   const [localLoading, setLocalLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading) {
-      const timer = setTimeout(() => setLocalLoading(false), 500);
-      return () => clearTimeout(timer);
+      const fetchProduct = async () => {
+        try {
+          const res = await fetch("http://localhost:5000/api/lemon/products");
+          const data = await res.json();
+          console.log("LemonSqueezy API Response:", data);
+
+          if (data.length > 0) {
+            setProduct({
+              name: data[0].name,
+              price_formatted: "$" + (data[0].price / 100).toFixed(2),
+              description: data[0].description || "",
+              variant_id: data[0].variant_id,
+              test_mode: data[0].test_mode,
+            });
+          }
+        } catch (err) {
+          console.error("Error fetching product:", err);
+        } finally {
+          setLocalLoading(false);
+        }
+      };
+
+      fetchProduct();
     }
   }, [isLoading]);
+
+  const onSubscribe = async () => {
+    if (!product?.variant_id) return;
+
+    setIsPending(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/lemon/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          variantId: product.variant_id,
+          userId: session?.user.id,
+          email: session?.user.email,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   if (isLoading || localLoading) {
     return (
@@ -51,10 +98,17 @@ const SubscriptionPage = () => {
             <div className="flex justify-center mb-10">
               <div className="text-center">
                 <div className="flex items-baseline justify-center">
-                  <span className="text-5xl font-bold">$4.99</span>
+                  <span className="text-5xl font-bold">
+                    {product?.price_formatted || "$4.99"}
+                  </span>
                   <span className="text-gray-500 text-xl ml-2">/month</span>
                 </div>
                 <p className="text-gray-500 mt-2">Cancel anytime</p>
+                {product?.test_mode && (
+                  <span className="text-xs text-orange-500 mt-1">
+                    Test Mode
+                  </span>
+                )}
               </div>
             </div>
 
@@ -80,7 +134,19 @@ const SubscriptionPage = () => {
             </ul>
 
             <div className="text-center">
-              <PaddleButton />
+              <button
+                onClick={onSubscribe}
+                disabled={
+                  isPending || !product?.variant_id || role === "premium-user"
+                }
+                className="w-full max-w-xs mx-auto px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {isPending
+                  ? "Processing..."
+                  : role === "premium-user"
+                  ? "You are already a premium user"
+                  : "Upgrade Now"}
+              </button>
             </div>
           </div>
         </div>
@@ -164,9 +230,9 @@ const SubscriptionPage = () => {
               How does billing work?
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Your $4.99 monthly subscription will be automatically billed each
-              month until you cancel. You can cancel anytime from your account
-              settings.
+              Your {product?.price_formatted || "$4.99"} monthly subscription
+              will be automatically billed each month until you cancel. You can
+              cancel anytime from your account settings.
             </p>
           </div>
 

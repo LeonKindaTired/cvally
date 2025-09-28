@@ -231,6 +231,8 @@ router.post(
             .from("profiles")
             .update({
               role: "premium-user",
+              is_premium: true,
+              premium_expires_at: null,
               subscription_id:
                 subscription.attributes.first_subscription_item.subscription_id.toString(),
             })
@@ -238,13 +240,30 @@ router.post(
 
           if (error) console.error("❌ Error upgrading user:", error);
           else console.log(`✅ User ${userId} upgraded via subscription`);
-        } else if (
-          ["cancelled", "expired", "paused"].includes(subscriptionStatus)
-        ) {
+        } else if (subscriptionStatus === "cancelled") {
+          const { error } = await supabaseAdmin
+            .from("profiles")
+            .update({
+              role: "premium-user",
+              is_premium: true,
+              premium_expires_at: subscription.attributes.ends_at,
+              subscription_status: "cancelled",
+            })
+            .eq("id", userId);
+
+          if (error)
+            console.error("❌ Error handling cancelled subscription:", error);
+          else
+            console.log(
+              `📉 User ${userId} subscription cancelled, premium access until: ${subscription.attributes.ends_at}`
+            );
+        } else if (["expired", "paused"].includes(subscriptionStatus)) {
           const { error } = await supabaseAdmin
             .from("profiles")
             .update({
               role: "user",
+              is_premium: false,
+              premium_expires_at: null,
               subscription_id: null,
             })
             .eq("id", userId);
@@ -497,6 +516,55 @@ router.get("/transactions/:userId", async (req: Request, res: Response) => {
   } catch (err) {
     console.error("❌ Error fetching transactions:", err);
     res.status(500).json({ error: "Failed to fetch transactions" });
+  }
+});
+
+router.get("/subscriptions/:id", async (req, res) => {
+  try {
+    const response = await fetch(
+      `https://api.lemonsqueezy.com/v1/subscriptions/${req.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.LEMON_API_KEY_TEST}`,
+          Accept: "application/vnd.api+json",
+        },
+      }
+    );
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/subscriptions/:id/cancel", async (req, res) => {
+  try {
+    const response = await fetch(
+      `https://api.lemonsqueezy.com/v1/subscriptions/${req.params.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${process.env.LEMON_API_KEY_TEST}`,
+          "Content-Type": "application/vnd.api+json",
+          Accept: "application/vnd.api+json",
+        },
+        body: JSON.stringify({
+          data: {
+            type: "subscriptions",
+            id: req.params.id,
+            attributes: {
+              cancelled: true,
+            },
+          },
+        }),
+      }
+    );
+
+    const data = await response.json();
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 
