@@ -17,6 +17,7 @@ import {
   updateTransactionStatus,
   getTransactionByOrderId,
 } from "../supabase/transactions";
+import rateLimit from "express-rate-limit";
 
 const router = express.Router();
 
@@ -101,6 +102,80 @@ interface SubscriptionData {
   updatedAt: string;
 }
 
+const rateLimitHandler = (req: Request, res: Response) => {
+  const rateLimitInfo = (req as any).rateLimit;
+
+  if (!rateLimitInfo) return;
+
+  const resetTime =
+    rateLimitInfo.resetTime instanceof Date
+      ? Math.ceil(rateLimitInfo.resetTime.getTime() / 1000)
+      : Math.ceil((Date.now() + (rateLimitInfo.resetTime || 900000)) / 1000);
+
+  res.status(429).json({
+    error: "Too many requests from this IP, please try again later",
+    retryAfter: resetTime,
+    limit: rateLimitInfo.limit,
+    current: rateLimitInfo.current,
+  });
+};
+
+const webhookLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const productsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const portalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const transactionsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const subscriptionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const subscriptionCancelLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 function isSubscription(data: any): data is Subscription {
   return (
     data.attributes && data.attributes.first_subscription_item !== undefined
@@ -174,6 +249,7 @@ const verifyWebhookSignature = (
 
 router.post(
   "/lemon-webhook",
+  webhookLimiter,
   verifyWebhookSignature,
   async (req: express.Request, res: express.Response) => {
     try {
@@ -414,7 +490,7 @@ router.post(
 
 router.use(express.json());
 
-router.get("/products", async (req, res) => {
+router.get("/products", productsLimiter, async (req, res) => {
   try {
     console.log("🛍️ Fetching products...");
     const response = await fetch("https://api.lemonsqueezy.com/v1/products", {
@@ -470,66 +546,78 @@ router.get("/products", async (req, res) => {
   }
 });
 
-router.post("/checkout", async (req: Request, res: Response) => {
-  try {
-    console.log("💰 Checkout request:", req.body);
-    const { variantId, userId, email } = req.body;
+router.post(
+  "/checkout",
+  checkoutLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      console.log("💰 Checkout request:", req.body);
+      const { variantId, userId, email } = req.body;
 
-    if (!variantId) {
-      return res.status(400).json({ error: "Missing variantId" });
+      if (!variantId) {
+        return res.status(400).json({ error: "Missing variantId" });
+      }
+      if (!userId || !email) {
+        return res.status(400).json({ error: "Missing user data" });
+      }
+
+      const checkoutUrl = await createCheckoutUrl({
+        variantId: variantId,
+        userEmail: email,
+        userId,
+      });
+
+      res.json({ checkoutUrl });
+    } catch (err) {
+      console.error("❌ Checkout error:", err);
+      res.status(500).json({ error: "Failed to create checkout URL" });
     }
-    if (!userId || !email) {
-      return res.status(400).json({ error: "Missing user data" });
+  }
+);
+
+router.get(
+  "/portal/:userId",
+  portalLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const customerId = await getCustomerId(supabaseAdmin, userId);
+      const subscriptionId = await getSubscriptionId(supabaseAdmin, customerId);
+      const url = await createCustomerPortal(subscriptionId);
+      res.json({ url });
+    } catch (err) {
+      console.error("❌ Customer portal error:", err);
+      res.status(500).json({ error: "Failed to create portal URL" });
     }
-
-    const checkoutUrl = await createCheckoutUrl({
-      variantId: variantId,
-      userEmail: email,
-      userId,
-    });
-
-    res.json({ checkoutUrl });
-  } catch (err) {
-    console.error("❌ Checkout error:", err);
-    res.status(500).json({ error: "Failed to create checkout URL" });
   }
-});
+);
 
-router.get("/portal/:userId", async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params;
-    const customerId = await getCustomerId(supabaseAdmin, userId);
-    const subscriptionId = await getSubscriptionId(supabaseAdmin, customerId);
-    const url = await createCustomerPortal(subscriptionId);
-    res.json({ url });
-  } catch (err) {
-    console.error("❌ Customer portal error:", err);
-    res.status(500).json({ error: "Failed to create portal URL" });
-  }
-});
+router.get(
+  "/transactions/:userId",
+  transactionsLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
 
-router.get("/transactions/:userId", async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params;
+      const { data: transactions, error } = await supabaseAdmin
+        .from("transactions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
 
-    const { data: transactions, error } = await supabaseAdmin
-      .from("transactions")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+      if (error) {
+        throw error;
+      }
 
-    if (error) {
-      throw error;
+      res.json(transactions);
+    } catch (err) {
+      console.error("❌ Error fetching transactions:", err);
+      res.status(500).json({ error: "Failed to fetch transactions" });
     }
-
-    res.json(transactions);
-  } catch (err) {
-    console.error("❌ Error fetching transactions:", err);
-    res.status(500).json({ error: "Failed to fetch transactions" });
   }
-});
+);
 
-router.get("/subscriptions/:id", async (req, res) => {
+router.get("/subscriptions/:id", subscriptionLimiter, async (req, res) => {
   try {
     const response = await fetch(
       `https://api.lemonsqueezy.com/v1/subscriptions/${req.params.id}`,
@@ -548,34 +636,38 @@ router.get("/subscriptions/:id", async (req, res) => {
   }
 });
 
-router.post("/subscriptions/:id/cancel", async (req, res) => {
-  try {
-    const response = await fetch(
-      `https://api.lemonsqueezy.com/v1/subscriptions/${req.params.id}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${LEMON_API_KEY}`,
-          "Content-Type": "application/vnd.api+json",
-          Accept: "application/vnd.api+json",
-        },
-        body: JSON.stringify({
-          data: {
-            type: "subscriptions",
-            id: req.params.id,
-            attributes: {
-              cancelled: true,
-            },
+router.post(
+  "/subscriptions/:id/cancel",
+  subscriptionCancelLimiter,
+  async (req, res) => {
+    try {
+      const response = await fetch(
+        `https://api.lemonsqueezy.com/v1/subscriptions/${req.params.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${LEMON_API_KEY}`,
+            "Content-Type": "application/vnd.api+json",
+            Accept: "application/vnd.api+json",
           },
-        }),
-      }
-    );
+          body: JSON.stringify({
+            data: {
+              type: "subscriptions",
+              id: req.params.id,
+              attributes: {
+                cancelled: true,
+              },
+            },
+          }),
+        }
+      );
 
-    const data = await response.json();
-    res.json({ success: true, data });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+      const data = await response.json();
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 export default router;

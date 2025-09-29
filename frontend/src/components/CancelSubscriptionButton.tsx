@@ -6,12 +6,14 @@ interface CancelSubscriptionButtonProps {
   subscriptionId: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
+  id?: string;
 }
 
 const CancelSubscriptionButton = ({
   subscriptionId,
   onSuccess,
   onError,
+  id,
 }: CancelSubscriptionButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { session } = useAuth();
@@ -24,14 +26,6 @@ const CancelSubscriptionButton = ({
   const handleCancelSubscription = async () => {
     if (!subscriptionId) {
       onError?.("No subscription ID found");
-      return;
-    }
-
-    if (
-      !confirm(
-        "Are you sure you want to cancel your subscription? You'll retain access until the end of your billing period."
-      )
-    ) {
       return;
     }
 
@@ -60,18 +54,12 @@ const CancelSubscriptionButton = ({
 
       if (result.success) {
         onSuccess?.();
-        alert(
-          "Your subscription has been cancelled successfully. You'll retain access until the end of your billing period."
-        );
       } else {
         throw new Error(result.error || "Failed to cancel subscription");
       }
     } catch (error) {
       console.error("Error cancelling subscription:", error);
       onError?.(error instanceof Error ? error.message : "An error occurred");
-      alert(
-        "Failed to cancel subscription. Please try again or contact support."
-      );
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +67,7 @@ const CancelSubscriptionButton = ({
 
   return (
     <Button
+      id={id}
       onClick={handleCancelSubscription}
       disabled={isLoading}
       variant="destructive"
